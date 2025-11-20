@@ -1,17 +1,17 @@
 /**
- * Módulo de Integração com Kie.ai Sora 2 API
+ * Módulo de Integração com VideoGenAPI.com
  * Gerencia todas as interações com a API de geração de vídeo
  */
 import axios from 'axios';
 import config from './config.js';
 
 /**
- * Cliente HTTP configurado para Kie.ai API
+ * Cliente HTTP configurado para VideoGenAPI
  */
-const kieAiClient = axios.create({
-  baseURL: config.kieAi.baseUrl,
+const videoGenClient = axios.create({
+  baseURL: config.videoGenApi.baseUrl,
   headers: {
-    'Authorization': `Bearer ${config.kieAi.apiKey}`,
+    'x-api-key': config.videoGenApi.apiKey,
     'Content-Type': 'application/json',
   },
   timeout: 30000, // 30 segundos
@@ -23,44 +23,39 @@ const kieAiClient = axios.create({
 const ERROR_MESSAGES = {
   400: '❌ Erro: Parâmetros inválidos enviados para a API',
   401: '❌ Erro: API Key inválida ou não autorizada',
-  402: '❌ Erro: Créditos insuficientes na conta Kie.ai',
+  402: '❌ Erro: Créditos insuficientes na conta VideoGenAPI',
   429: '❌ Erro: Limite de requisições excedido. Tente novamente em alguns minutos',
-  500: '❌ Erro: Problema no servidor da Kie.ai. Tente novamente mais tarde',
+  500: '❌ Erro: Problema no servidor da VideoGenAPI. Tente novamente mais tarde',
 };
 
 /**
- * Cria uma nova task de geração de vídeo na API Kie.ai
+ * Cria uma nova task de geração de vídeo na API VideoGenAPI
  * 
  * @param {string} prompt - Texto descritivo do vídeo a ser gerado
  * @param {Object} options - Opções adicionais
  * @param {string} options.aspectRatio - 'portrait' ou 'landscape'
- * @param {number} options.nFrames - Número de frames (10 ou 15)
- * @param {boolean} options.removeWatermark - Remover marca d'água
- * @returns {Promise<Object>} Objeto contendo taskId e outras informações
+ * @param {number} options.duration - Duração em segundos (5 ou 10)
+ * @returns {Promise<Object>} Objeto contendo request_id e outras informações
  */
 export async function createVideoTask(prompt, options = {}) {
   try {
     console.log(`🎬 Criando task de vídeo para prompt: "${prompt.substring(0, 50)}..."`);
 
     const payload = {
-      model: 'sora-2-text-to-video',
       prompt: prompt,
       aspect_ratio: options.aspectRatio || config.video.defaultAspectRatio,
-      n_frames: options.nFrames || config.video.defaultNFrames,
-      remove_watermark: options.removeWatermark !== undefined 
-        ? options.removeWatermark 
-        : config.video.removeWatermark,
+      duration: options.duration || config.video.defaultDuration,
     };
 
     console.log('📤 Payload enviado:', JSON.stringify(payload, null, 2));
 
-    const response = await kieAiClient.post('/jobs/createTask', payload);
+    const response = await videoGenClient.post('/generate', payload);
 
     console.log('✅ Task criada com sucesso:', response.data);
 
     return {
       success: true,
-      taskId: response.data.taskId || response.data.data?.taskId,
+      requestId: response.data.request_id,
       data: response.data,
     };
 
@@ -77,27 +72,25 @@ export async function createVideoTask(prompt, options = {}) {
 /**
  * Consulta o status de uma task específica
  * 
- * @param {string} taskId - ID da task a ser consultada
+ * @param {string} requestId - ID da requisição a ser consultada
  * @returns {Promise<Object>} Informações sobre o estado da task
  */
-export async function getTaskStatus(taskId) {
+export async function getTaskStatus(requestId) {
   try {
-    const response = await kieAiClient.get('/jobs/recordInfo', {
-      params: { taskId },
-    });
+    const response = await videoGenClient.get(`/generate/${requestId}`);
 
-    const data = response.data.data || response.data;
+    const data = response.data;
 
     return {
       success: true,
-      state: data.state,
-      taskId: data.taskId,
-      resultJson: data.resultJson,
+      status: data.status,
+      requestId: data.request_id,
+      videoUrl: data.video_url,
       data: data,
     };
 
   } catch (error) {
-    console.error(`❌ Erro ao consultar task ${taskId}:`, error.response?.data || error.message);
+    console.error(`❌ Erro ao consultar task ${requestId}:`, error.response?.data || error.message);
 
     return {
       success: false,
@@ -110,12 +103,12 @@ export async function getTaskStatus(taskId) {
  * Aguarda até que uma task seja concluída (sucesso ou falha)
  * Usa polling com intervalo configurável
  * 
- * @param {string} taskId - ID da task a ser monitorada
+ * @param {string} requestId - ID da requisição a ser monitorada
  * @param {Function} onProgress - Callback chamado a cada tentativa (opcional)
  * @returns {Promise<Object>} Resultado final da task
  */
-export async function waitForTaskCompletion(taskId, onProgress = null) {
-  console.log(`⏳ Iniciando polling para task ${taskId}...`);
+export async function waitForTaskCompletion(requestId, onProgress = null) {
+  console.log(`⏳ Iniciando polling para request ${requestId}...`);
 
   let attempts = 0;
   const maxAttempts = config.polling.maxAttempts;
@@ -126,49 +119,46 @@ export async function waitForTaskCompletion(taskId, onProgress = null) {
 
     console.log(`🔄 Tentativa ${attempts}/${maxAttempts} - Consultando status...`);
 
-    const result = await getTaskStatus(taskId);
+    const result = await getTaskStatus(requestId);
 
     if (!result.success) {
       return result;
     }
 
-    const { state, resultJson } = result;
+    const { status, videoUrl } = result;
 
     // Chama callback de progresso se fornecido
     if (onProgress) {
-      onProgress(attempts, maxAttempts, state);
+      onProgress(attempts, maxAttempts, status);
     }
 
     // Task completada com sucesso
-    if (state === 'success') {
+    if (status === 'completed' && videoUrl) {
       console.log('✅ Task concluída com sucesso!');
-
-      // Extrai URLs do vídeo
-      const videoUrls = extractVideoUrls(resultJson);
 
       return {
         success: true,
-        state: 'success',
-        taskId,
-        videoUrls,
+        status: 'completed',
+        requestId,
+        videoUrl,
         data: result.data,
       };
     }
 
     // Task falhou
-    if (state === 'fail' || state === 'failed') {
+    if (status === 'failed' || status === 'error') {
       console.error('❌ Task falhou');
 
       return {
         success: false,
-        state: 'fail',
-        taskId,
-        error: 'A geração do vídeo falhou. Por favor, tente novamente.',
+        status: 'failed',
+        requestId,
+        error: result.data.error || 'A geração do vídeo falhou. Por favor, tente novamente.',
       };
     }
 
-    // Estados intermediários: pending, processing, etc.
-    console.log(`⏳ Estado atual: ${state} - Aguardando ${interval}ms...`);
+    // Estados intermediários: pending, processing, queued
+    console.log(`⏳ Estado atual: ${status} - Aguardando ${interval}ms...`);
 
     await sleep(interval);
   }
@@ -178,43 +168,9 @@ export async function waitForTaskCompletion(taskId, onProgress = null) {
 
   return {
     success: false,
-    error: 'Timeout: a geração do vídeo está demorando mais do que o esperado. Por favor, consulte o taskId manualmente.',
-    taskId,
+    error: 'Timeout: a geração do vídeo está demorando mais do que o esperado. Por favor, consulte o requestId manualmente.',
+    requestId,
   };
-}
-
-/**
- * Extrai URLs de vídeo do resultJson retornado pela API
- * 
- * @param {Object} resultJson - JSON com resultados da API
- * @returns {Array<string>} Array de URLs de vídeo
- */
-function extractVideoUrls(resultJson) {
-  if (!resultJson) return [];
-
-  // Tenta diferentes estruturas possíveis
-  if (resultJson.resultUrls && Array.isArray(resultJson.resultUrls)) {
-    return resultJson.resultUrls;
-  }
-
-  if (resultJson.urls && Array.isArray(resultJson.urls)) {
-    return resultJson.urls;
-  }
-
-  if (resultJson.videoUrl) {
-    return [resultJson.videoUrl];
-  }
-
-  if (typeof resultJson === 'string') {
-    try {
-      const parsed = JSON.parse(resultJson);
-      return extractVideoUrls(parsed);
-    } catch {
-      return [resultJson];
-    }
-  }
-
-  return [];
 }
 
 /**
@@ -234,7 +190,7 @@ function handleApiError(error) {
   }
 
   if (error.request) {
-    return '❌ Erro de conexão: Não foi possível conectar à API Kie.ai';
+    return '❌ Erro de conexão: Não foi possível conectar à API VideoGenAPI';
   }
 
   return `❌ Erro inesperado: ${error.message}`;
