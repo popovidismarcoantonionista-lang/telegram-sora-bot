@@ -1,0 +1,19 @@
+{
+  "name": "telegram-sora-bot",
+  "version": "1.0.0",
+  "description": "Bot do Telegram que integra com Kie.ai Sora 2 Text To Video API",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "keywords": ["telegram", "bot", "sora", "video", "ai"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "telegraf": "^4.15.0",
+    "axios": "^1.6.2",
+    "dotenv": "^16.3.1"
+  }
+}
