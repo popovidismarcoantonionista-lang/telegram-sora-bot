@@ -1,13 +1,13 @@
 /**
  * Módulo do Bot Telegram
- * Gerencia interações com usuários e orquestra chamadas à API Replicate
+ * Gerencia interações e geração de imagens com Hugging Face
  */
 import { Telegraf } from 'telegraf';
 import config from './config.js';
-import { createVideoTask, waitForTaskCompletion } from './replicateService.js';
+import { generateImage, generateMultipleImages, validatePrompt } from './huggingFaceService.js';
 
 /**
- * Inicializa e configura o bot do Telegram
+ * Inicializa e configura o bot
  */
 export function createBot() {
   const bot = new Telegraf(config.telegram.botToken);
@@ -16,40 +16,43 @@ export function createBot() {
   bot.use(async (ctx, next) => {
     const start = Date.now();
     const user = ctx.from?.username || ctx.from?.id || 'unknown';
-    console.log(`📨 Mensagem recebida de @${user}`);
+    console.log(`📨 Mensagem de @${user}`);
 
     await next();
 
     const duration = Date.now() - start;
-    console.log(`✅ Resposta enviada em ${duration}ms`);
+    console.log(`✅ Processado em ${duration}ms`);
   });
 
   // Comando /start
   bot.start(async (ctx) => {
     const welcomeMessage = `
-🎬 *Bem-vindo ao Bot de Geração de Vídeos!*
+🎨 *Bem-vindo ao Bot de Geração de Imagens AI!*
 
-Este bot gera vídeos usando a poderosa API *Replicate*.
+Crie imagens incríveis usando *Inteligência Artificial*.
+Powered by *Hugging Face* 🤗 + *Stable Diffusion* 🎨
+
+✨ *100% GRATUITO* ✨
 
 📝 *Como usar:*
-Envie uma descrição em texto do vídeo que deseja criar.
+Simplesmente envie uma descrição do que quer ver!
 
-Exemplo:
+*Exemplo:*
 \`\`\`
-Um gato laranja caminhando em uma praia ao pôr do sol
+Um gato astronauta flutuando no espaço
 \`\`\`
 
-⚙️ *Comandos disponíveis:*
-/start - Exibe esta mensagem
-/help - Instruções de uso e dicas
-/models - Ver modelos disponíveis
-/info - Informações sobre custos
+⚙️ *Comandos:*
+/start - Mensagem de boas-vindas
+/help - Guia completo + dicas
+/examples - Ver exemplos incríveis
+/multiple - Gerar várias imagens
+/info - Sobre o bot
 
-🎨 *Modelo atual:* ${config.replicate.model}
+🎯 *Modelo atual:* Stable Diffusion XL
+⚡ *Tempo médio:* 10-30 segundos
 
-Envie seu primeiro prompt para começar! 🚀
-
-💡 *Dica:* A geração pode levar de 2 a 10 minutos dependendo do modelo e complexidade.
+Descreva sua imagem e vamos criar! 🚀
     `;
 
     await ctx.replyWithMarkdown(welcomeMessage);
@@ -58,78 +61,93 @@ Envie seu primeiro prompt para começar! 🚀
   // Comando /help
   bot.help(async (ctx) => {
     const helpMessage = `
-📖 *Guia de Uso Completo*
+📖 *Guia Completo de Uso*
 
-*1. Envie uma descrição detalhada*
-Seja específico e criativo! Descreva:
-• **O que acontece** no vídeo
-• **Estilo visual** (realista, animado, cartoon, etc.)
-• **Ambiente** e iluminação
-• **Movimentos** da câmera ou personagens
-• **Emoção** ou atmosfera desejada
+*🎨 Como criar imagens incríveis:*
 
-*✅ Exemplos de prompts EXCELENTES:*
-• "Uma astronauta flutuando graciosamente no espaço profundo, com nebulosas roxas e azuis ao fundo, câmera girando lentamente"
-• "Cachorro golden retriever correndo em câmera lenta por um campo de flores amarelas ao pôr do sol dourado"
-• "Cidade futurista cyberpunk com arranha-céus neon, carros voadores, chuva torrencial, estilo Blade Runner"
-• "Cachoeira mágica em floresta encantada, água cristalina brilhante, borboletas luminosas, atmosfera mística"
+*1. Seja específico e detalhado*
+Quanto mais detalhes, melhor o resultado!
 
-*❌ Exemplos de prompts RUINS:*
-• "Vídeo legal" (muito vago)
-• "Algo interessante" (sem contexto)
-• "Faça um vídeo" (sem detalhes)
+Descreva:
+• *O que* você quer ver
+• *Estilo* artístico (realista, cartoon, 3D, etc.)
+• *Cores* predominantes
+• *Iluminação* (dia, noite, neon, etc.)
+• *Atmosfera* (alegre, sombrio, místico, etc.)
 
-*2. Aguarde o processamento*
-⏱️ Tempo estimado: 2-10 minutos
-📊 Status: Você receberá atualizações de progresso
+*2. Use palavras-chave poderosas*
+• "high quality", "detailed", "4k", "masterpiece"
+• "photorealistic", "cinematic lighting"
+• "digital art", "concept art", "trending on artstation"
 
-*3. Receba seu vídeo*
-🎥 Link direto para download
-🆔 ID da predição para referência
+*3. Especifique o estilo*
+• Fotográfico: "photo, realistic, 8k"
+• Ilustração: "digital art, illustration"
+• 3D: "3D render, octane render"
+• Pintura: "oil painting, watercolor"
 
-💡 *Dicas Profissionais:*
-• Use adjetivos descritivos (brilhante, sombrio, vibrante)
-• Mencione estilo artístico (cinematográfico, 3D, anime)
-• Especifique movimento de câmera (zoom, pan, orbit)
-• Seja específico mas conciso (100-200 palavras ideal)
+*✅ Exemplos EXCELENTES:*
+
+• "A majestic lion with a golden mane, sunset background, photorealistic, 4k, detailed"
+
+• "Cyberpunk city at night, neon lights, rain, futuristic cars, cinematic, high quality"
+
+• "Cute cartoon cat wearing wizard hat, magical sparkles, colorful, digital art"
+
+• "Ancient temple in misty forest, dramatic lighting, concept art, fantasy"
+
+*❌ Evite:*
+• Descrições muito vagas ("algo legal")
+• Sem detalhes ("uma pessoa")
+• Muitas ideias misturadas
+
+*💡 Dica Pro:*
+Comece simples e vá adicionando detalhes!
     `;
 
     await ctx.replyWithMarkdown(helpMessage);
   });
 
-  // Comando /models
-  bot.command('models', async (ctx) => {
-    const modelsMessage = `
-🎯 *Modelos Disponíveis na Replicate*
+  // Comando /examples
+  bot.command('examples', async (ctx) => {
+    const examplesMessage = `
+🌟 *Exemplos de Prompts Incríveis*
 
-*Modelo Atual:* ${config.replicate.model}
+*📸 FOTOGRAFIA:*
+"Portrait of a young woman with blue eyes, golden hour lighting, professional photography, bokeh background, 50mm lens"
 
-*Modelos Populares:*
+*🎨 ARTE DIGITAL:*
+"Dragon flying over mountain peaks, epic fantasy art, dramatic clouds, digital painting, highly detailed"
 
-1️⃣ *minimax/video-01*
-   • Modelo rápido e eficiente
-   • Ótima qualidade/custo
-   • ~$0.01-0.05 por vídeo
+*🌆 CENÁRIOS:*
+"Futuristic Tokyo street at night, neon signs, rain reflections, cyberpunk aesthetic, cinematic composition"
 
-2️⃣ *stability-ai/stable-video-diffusion*
-   • Alta qualidade, estável
-   • Melhor para vídeos curtos
-   • ~$0.05-0.10 por vídeo
+*🐾 ANIMAIS:*
+"Majestic white wolf in snowy forest, moonlight, mystical atmosphere, photorealistic, award winning"
 
-3️⃣ *genmo/mochi-1-preview*
-   • Qualidade cinematográfica
-   • Mais lento mas melhor resultado
-   • ~$0.10-0.20 por vídeo
+*🎭 FANTASIA:*
+"Fairy castle floating in clouds, magical glowing crystals, rainbow waterfall, fantasy illustration, dreamy"
 
-💰 *Custos Aproximados:*
-• Vídeo 5s: $0.01-0.05
-• Vídeo 10s: $0.05-0.10
-• Vídeo HD: +50% custo
+*🤖 SCI-FI:*
+"Advanced AI robot in laboratory, holographic displays, blue lighting, concept art, octane render"
 
-🔧 Para trocar de modelo, contate o administrador.
+*🏞️ NATUREZA:*
+"Tropical beach at sunset, palm trees, turquoise water, golden sand, paradise, professional photo"
+
+*🎪 SURREALISTA:*
+"Clock melting in desert, Salvador Dali style, surrealism, artistic, oil painting"
+
+*💡 Use como inspiração e adapte!*
     `;
 
-    await ctx.replyWithMarkdown(modelsMessage);
+    await ctx.replyWithMarkdown(examplesMessage);
+  });
+
+  // Comando /multiple
+  bot.command('multiple', async (ctx) => {
+    await ctx.reply('🎨 *Modo Múltiplas Imagens*\n\nEnvie seu prompt seguido de um número (2-4):\n\nExemplo:\n`Gato astronauta 3`\n\nIsso gerará 3 variações da sua ideia!', {
+      parse_mode: 'Markdown'
+    });
   });
 
   // Comando /info
@@ -137,161 +155,152 @@ Seja específico e criativo! Descreva:
     const infoMessage = `
 ℹ️ *Informações do Bot*
 
-🤖 *Tecnologia:*
-• Plataforma: Replicate AI
+*🤖 Tecnologia:*
+• IA: Hugging Face Inference API
+• Modelo: Stable Diffusion XL
 • Framework: Telegraf (Node.js)
-• Deploy: Render/Railway
 
-💰 *Sistema de Custos:*
-• Pay-as-you-go (pague apenas o que usar)
-• Sem mensalidade fixa
-• Preços variam por modelo (~$0.01-0.20/vídeo)
+*💰 Custo:*
+• *100% GRATUITO* ✨
+• Sem limites de uso abusivos
+• Sem necessidade de cartão
 
-⏱️ *Tempos de Processamento:*
-• Fila: 0-30s (depende da demanda)
-• Geração: 2-10min (depende do modelo)
-• Total: ~3-10min em média
+*⏱️ Performance:*
+• Geração: 10-30 segundos
+• Qualidade: 1024x1024 pixels
+• Rate limit: ~100 imagens/hora
 
-🔒 *Privacidade:*
-• Seus prompts são processados pela Replicate
-• Vídeos ficam disponíveis por 24h
-• Não armazenamos seus vídeos permanentemente
+*🔒 Privacidade:*
+• Seus prompts são processados pela Hugging Face
+• Imagens não são armazenadas permanentemente
+• Enviadas diretamente para você
 
-📊 *Limites:*
-• Sem limite de requisições
-• Limitado apenas por créditos Replicate
-• Uma geração por vez por usuário
+*🎨 Modelos Disponíveis:*
+• Stable Diffusion XL (atual)
+• Stable Diffusion 2.1
+• Stable Diffusion 1.5
 
-🔗 *Links Úteis:*
-• Replicate: replicate.com
-• Código fonte: github.com/seu-repo
-• Suporte: Entre em contato via Telegram
+*🔗 Links:*
+• Hugging Face: huggingface.co
+• Código: github.com/seu-repo
+• Modelo: huggingface.co/stabilityai/stable-diffusion-xl-base-1.0
+
+*⭐ 100% Open Source & Free*
     `;
 
     await ctx.replyWithMarkdown(infoMessage);
   });
 
-  // Handler para mensagens de texto (prompts de vídeo)
+  // Handler para mensagens de texto (prompts)
   bot.on('text', async (ctx) => {
-    const prompt = ctx.message.text;
+    let prompt = ctx.message.text;
 
     // Ignora comandos
     if (prompt.startsWith('/')) {
       return;
     }
 
-    // Valida tamanho do prompt
-    if (prompt.length < 10) {
-      await ctx.reply('⚠️ Por favor, envie uma descrição mais detalhada (mínimo 10 caracteres).\n\n💡 Use /help para ver exemplos de bons prompts!');
+    // Verifica se é pedido de múltiplas imagens
+    const multipleMatch = prompt.match(/^(.*?)\s+(\d+)$/);
+    let count = 1;
+
+    if (multipleMatch) {
+      prompt = multipleMatch[1].trim();
+      count = Math.min(parseInt(multipleMatch[2]), 4);
+
+      if (count > 1) {
+        await ctx.reply(`🎨 Vou gerar *${count} variações* para você!\n⏳ Isso pode levar ~${count * 15}-${count * 30} segundos...`, {
+          parse_mode: 'Markdown'
+        });
+      }
+    }
+
+    // Valida prompt
+    const validation = validatePrompt(prompt);
+    if (!validation.valid) {
+      await ctx.reply(validation.error);
       return;
     }
 
-    if (prompt.length > 2000) {
-      await ctx.reply('⚠️ Descrição muito longa. Por favor, use no máximo 2000 caracteres.\n\n💡 Seja conciso mas descritivo!');
-      return;
-    }
-
-    // Inicia processamento
-    await ctx.reply('🎬 Recebido! Iniciando geração do vídeo...\n\n⏳ Isso pode levar alguns minutos. Aguarde!');
+    // Mensagem inicial
+    const loadingMsg = await ctx.reply('🎨 Criando sua imagem...\n⏳ Aguarde ~10-30 segundos...', {
+      parse_mode: 'Markdown'
+    });
 
     try {
-      // 1. Criar predição na Replicate
-      const createResult = await createVideoTask(prompt);
+      if (count > 1) {
+        // Gera múltiplas imagens
+        const results = await generateMultipleImages(prompt, count);
 
-      if (!createResult.success) {
-        await ctx.reply(`${createResult.error}\n\n💡 Tente novamente ou use /help para dicas.`);
-        return;
-      }
+        let successCount = 0;
 
-      const predictionId = createResult.predictionId;
-      await ctx.reply(`✅ Predição criada!\n🆔 ID: \`${predictionId}\`\n\n⏳ Processando seu vídeo...`, {
-        parse_mode: 'Markdown'
-      });
+        for (let i = 0; i < results.length; i++) {
+          const result = results[i];
 
-      // 2. Aguardar conclusão com feedback de progresso
-      let lastProgressMessage = null;
-      let lastProgress = 0;
+          if (result.success) {
+            successCount++;
 
-      const result = await waitForTaskCompletion(predictionId, async (attempt, maxAttempts, status) => {
-        // Envia atualizações a cada 10 tentativas ou mudança de status
-        const progress = Math.round((attempt / maxAttempts) * 100);
-
-        if (attempt % 10 === 0 || progress - lastProgress >= 10) {
-          lastProgress = progress;
-
-          const statusEmoji = {
-            'starting': '🚀',
-            'processing': '⚙️',
-            'succeeded': '✅',
-            'failed': '❌'
-          };
-
-          const progressMessage = `${statusEmoji[status] || '⏳'} *Status:* ${status}\n📊 *Progresso:* ${progress}%\n🔄 *Tentativa:* ${attempt}/${maxAttempts}`;
-
-          if (lastProgressMessage) {
-            try {
-              await ctx.telegram.editMessageText(
-                ctx.chat.id,
-                lastProgressMessage.message_id,
-                null,
-                progressMessage,
-                { parse_mode: 'Markdown' }
-              );
-            } catch {
-              // Ignora erros de edição
-            }
+            await ctx.replyWithPhoto(
+              { source: result.imageBuffer },
+              {
+                caption: `🎨 *Imagem ${i + 1}/${count}*\n\n📝 Prompt: ${prompt.substring(0, 100)}${prompt.length > 100 ? '...' : ''}\n⏱️ Gerada em ${result.duration}s\n🤖 Modelo: Stable Diffusion XL`,
+                parse_mode: 'Markdown'
+              }
+            );
           } else {
-            lastProgressMessage = await ctx.replyWithMarkdown(progressMessage);
+            await ctx.reply(`❌ Erro ao gerar imagem ${i + 1}: ${result.error}`);
           }
         }
-      });
 
-      // 3. Processar resultado
-      if (!result.success) {
-        await ctx.reply(`${result.error}\n\n🆔 Prediction ID: \`${predictionId}\`\n\n💡 Se o erro persistir, tente um prompt mais simples.`, {
-          parse_mode: 'Markdown'
-        });
-        return;
-      }
+        if (successCount > 0) {
+          await ctx.reply(`✨ *${successCount}/${count} imagens geradas!*\n\n💡 Gostou? Experimente outros prompts!`, {
+            parse_mode: 'Markdown'
+          });
+        }
 
-      // 4. Enviar vídeo ao usuário
-      if (result.videoUrl) {
-        const successMessage = `
-✨ *Vídeo gerado com sucesso!*
-
-🎥 *Link do vídeo:*
-${result.videoUrl}
-
-🆔 *Prediction ID:* \`${predictionId}\`
-📊 *Status:* ${result.status}
-
-💡 *Próximos passos:*
-• Clique no link para baixar/visualizar
-• O link expira em 24 horas
-• Envie outro prompt para gerar mais vídeos
-• Use /help para dicas de prompts melhores
-
-🌟 *Gostou?* Compartilhe com seus amigos!
-        `;
-
-        await ctx.replyWithMarkdown(successMessage);
+        // Deleta mensagem de loading
+        try {
+          await ctx.deleteMessage(loadingMsg.message_id);
+        } catch {}
 
       } else {
-        await ctx.reply(`⚠️ Vídeo processado, mas nenhum link foi retornado.\n\n🆔 Prediction ID: \`${predictionId}\`\n📊 Status: ${result.status}\n\n💡 Tente novamente.`, {
-          parse_mode: 'Markdown'
-        });
+        // Gera uma imagem
+        const result = await generateImage(prompt);
+
+        if (result.success) {
+          // Envia a imagem
+          await ctx.replyWithPhoto(
+            { source: result.imageBuffer },
+            {
+              caption: `✨ *Imagem Gerada!*\n\n📝 *Prompt:* ${prompt.substring(0, 200)}${prompt.length > 200 ? '...' : ''}\n\n⏱️ *Tempo:* ${result.duration}s\n🤖 *Modelo:* ${result.model.split('/').pop()}\n\n💡 *Dica:* Use /help para criar imagens ainda melhores!`,
+              parse_mode: 'Markdown'
+            }
+          );
+
+          // Deleta mensagem de loading
+          try {
+            await ctx.deleteMessage(loadingMsg.message_id);
+          } catch {}
+
+        } else {
+          await ctx.reply(result.error);
+        }
       }
 
     } catch (error) {
-      console.error('❌ Erro crítico no processamento:', error);
-
-      await ctx.reply(`❌ Ocorreu um erro inesperado.\n\n🔧 Detalhes: ${error.message}\n\n💡 Por favor, tente novamente em alguns minutos.`);
+      console.error('❌ Erro crítico:', error);
+      await ctx.reply(`❌ Erro inesperado: ${error.message}\n\n💡 Tente novamente em alguns segundos.`);
     }
   });
 
-  // Handler para outros tipos de mensagem
+  // Handler para fotos (futuramente: img2img)
+  bot.on('photo', async (ctx) => {
+    await ctx.reply('📸 Recebi sua foto!\n\n⚠️ Por enquanto, o bot só gera imagens a partir de texto.\n\n💡 Envie uma descrição do que quer criar!');
+  });
+
+  // Handler para outros tipos
   bot.on('message', async (ctx) => {
-    await ctx.reply('⚠️ Por favor, envie apenas *mensagens de texto* com a descrição do vídeo.\n\nUse /help para mais informações.', {
+    await ctx.reply('⚠️ Por favor, envie apenas *texto* descrevendo a imagem que deseja.\n\nUse /help para ver exemplos!', {
       parse_mode: 'Markdown'
     });
   });
@@ -300,7 +309,7 @@ ${result.videoUrl}
   bot.catch((error, ctx) => {
     console.error('❌ Erro no bot:', error);
     if (ctx) {
-      ctx.reply('❌ Ocorreu um erro. Por favor, tente novamente.').catch(() => {});
+      ctx.reply('❌ Ocorreu um erro. Tente novamente.').catch(() => {});
     }
   });
 
