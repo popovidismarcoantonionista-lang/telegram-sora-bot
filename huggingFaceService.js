@@ -1,6 +1,6 @@
 /**
  * Módulo de Integração com Hugging Face Inference API
- * Gerencia geração de imagens com Stable Diffusion
+ * Suporta geração de IMAGENS e VÍDEOS
  */
 import { HfInference } from '@huggingface/inference';
 import config from './config.js';
@@ -14,16 +14,12 @@ const hf = new HfInference(config.huggingface.apiToken);
 
 /**
  * Gera uma imagem usando Stable Diffusion
- * 
- * @param {string} prompt - Descrição da imagem a ser gerada
- * @param {Object} options - Opções adicionais
- * @returns {Promise<Object>} Buffer da imagem e informações
  */
 export async function generateImage(prompt, options = {}) {
   try {
-    console.log(`🎨 Gerando imagem para prompt: "${prompt.substring(0, 50)}..."`);
+    console.log(`🎨 Gerando imagem: "${prompt.substring(0, 50)}..."`);
 
-    const model = config.huggingface.model;
+    const model = config.huggingface.imageModel;
     console.log(`🎯 Modelo: ${model}`);
 
     const params = {
@@ -34,12 +30,9 @@ export async function generateImage(prompt, options = {}) {
       guidance_scale: options.guidanceScale || config.image.defaultGuidanceScale,
     };
 
-    console.log('📤 Parâmetros:', params);
     console.log('⏳ Gerando imagem...');
-
     const startTime = Date.now();
 
-    // Gera a imagem
     const blob = await hf.textToImage({
       model: model,
       inputs: prompt,
@@ -49,13 +42,13 @@ export async function generateImage(prompt, options = {}) {
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);
     console.log(`✅ Imagem gerada em ${duration}s`);
 
-    // Converte blob para buffer
     const buffer = await blob.arrayBuffer();
     const imageBuffer = Buffer.from(buffer);
 
     return {
       success: true,
-      imageBuffer,
+      buffer: imageBuffer,
+      type: 'image',
       duration,
       prompt,
       model,
@@ -63,7 +56,6 @@ export async function generateImage(prompt, options = {}) {
 
   } catch (error) {
     console.error('❌ Erro ao gerar imagem:', error.message);
-
     return {
       success: false,
       error: handleApiError(error),
@@ -72,115 +64,155 @@ export async function generateImage(prompt, options = {}) {
 }
 
 /**
+ * Gera um vídeo usando modelos de Text-to-Video
+ */
+export async function generateVideo(prompt, options = {}) {
+  try {
+    console.log(`🎬 Gerando vídeo: "${prompt.substring(0, 50)}..."`);
+
+    const model = config.huggingface.videoModel;
+    console.log(`🎯 Modelo: ${model}`);
+
+    const params = {
+      negative_prompt: options.negativePrompt || config.huggingface.negativePrompt,
+      num_inference_steps: options.steps || config.video.defaultSteps,
+      num_frames: options.numFrames || config.video.defaultFrames,
+      guidance_scale: options.guidanceScale || 7.5,
+    };
+
+    console.log('⏳ Gerando vídeo (isso pode levar 1-3 minutos)...');
+    const startTime = Date.now();
+
+    // Usa API de inferência para text-to-video
+    const response = await hf.request({
+      model: model,
+      inputs: prompt,
+      parameters: params,
+    });
+
+    const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+    console.log(`✅ Vídeo gerado em ${duration}s`);
+
+    // Response pode ser blob ou buffer
+    let videoBuffer;
+    if (response instanceof Blob) {
+      const arrayBuffer = await response.arrayBuffer();
+      videoBuffer = Buffer.from(arrayBuffer);
+    } else if (Buffer.isBuffer(response)) {
+      videoBuffer = response;
+    } else if (response instanceof ArrayBuffer) {
+      videoBuffer = Buffer.from(response);
+    } else {
+      throw new Error('Formato de resposta inesperado');
+    }
+
+    return {
+      success: true,
+      buffer: videoBuffer,
+      type: 'video',
+      duration,
+      prompt,
+      model,
+    };
+
+  } catch (error) {
+    console.error('❌ Erro ao gerar vídeo:', error.message);
+    return {
+      success: false,
+      error: handleApiError(error, 'video'),
+    };
+  }
+}
+
+/**
  * Gera múltiplas imagens (batch)
- * 
- * @param {string} prompt - Descrição da imagem
- * @param {number} count - Número de imagens (max 4)
- * @returns {Promise<Array>} Array de resultados
  */
 export async function generateMultipleImages(prompt, count = 2) {
-  console.log(`🎨 Gerando ${count} imagens para prompt: "${prompt.substring(0, 50)}..."`);
+  console.log(`🎨 Gerando ${count} imagens...`);
 
   const results = [];
 
   for (let i = 0; i < Math.min(count, 4); i++) {
-    console.log(`\n📸 Gerando imagem ${i + 1}/${count}...`);
+    console.log(`\n📸 Imagem ${i + 1}/${count}...`);
 
     const result = await generateImage(prompt, {
-      // Varia ligeiramente os parâmetros para gerar imagens diferentes
       guidanceScale: 7.5 + (Math.random() * 2 - 1),
     });
 
     results.push(result);
 
-    // Pequeno delay entre requisições
     if (i < count - 1) {
       await sleep(1000);
     }
   }
 
   const successCount = results.filter(r => r.success).length;
-  console.log(`\n✅ ${successCount}/${count} imagens geradas com sucesso`);
+  console.log(`\n✅ ${successCount}/${count} imagens geradas`);
 
   return results;
 }
 
 /**
- * Gera variações de uma imagem (image-to-image)
- * Nota: Requer modelo específico, por enquanto usa text-to-image
- * 
- * @param {string} prompt - Prompt com variação desejada
- * @returns {Promise<Object>} Resultado da geração
+ * Detecta automaticamente se deve gerar imagem ou vídeo
  */
-export async function generateVariation(prompt) {
-  // Por enquanto, usa text-to-image com prompt modificado
-  return generateImage(`${prompt}, variation, alternative style`);
+export async function generateAuto(prompt, options = {}) {
+  // Palavras-chave que indicam vídeo
+  const videoKeywords = [
+    'video', 'vídeo', 'movimento', 'moving', 'animação', 'animation',
+    'correndo', 'running', 'voando', 'flying', 'nadando', 'swimming',
+    'dançando', 'dancing', 'andando', 'walking', 'girando', 'spinning'
+  ];
+
+  const lowerPrompt = prompt.toLowerCase();
+  const isVideo = videoKeywords.some(keyword => lowerPrompt.includes(keyword));
+
+  if (isVideo) {
+    console.log('🎬 Detectado: Requisição de VÍDEO');
+    return await generateVideo(prompt, options);
+  } else {
+    console.log('🎨 Detectado: Requisição de IMAGEM');
+    return await generateImage(prompt, options);
+  }
 }
 
 /**
- * Trata erros da API e retorna mensagem amigável
- * 
- * @param {Error} error - Erro capturado
- * @returns {string} Mensagem de erro formatada
+ * Trata erros da API
  */
-function handleApiError(error) {
+function handleApiError(error, type = 'image') {
   const message = error.message || String(error);
 
   if (message.includes('401') || message.includes('Invalid token')) {
-    return '❌ Erro: Token da Hugging Face inválido.\n\n💡 Verifique seu HUGGINGFACE_API_TOKEN em huggingface.co/settings/tokens';
+    return '❌ Token da Hugging Face inválido.\n\n💡 Verifique HUGGINGFACE_API_TOKEN';
   }
 
   if (message.includes('429') || message.includes('rate limit')) {
-    return '❌ Erro: Limite de requisições excedido.\n\n💡 Aguarde alguns segundos e tente novamente.';
+    return '❌ Limite de requisições excedido.\n\n💡 Aguarde alguns segundos.';
   }
 
   if (message.includes('503') || message.includes('loading')) {
-    return '❌ Erro: Modelo está carregando.\n\n💡 Aguarde 20-30 segundos e tente novamente.';
+    const waitTime = type === 'video' ? '1-2 minutos' : '20-30 segundos';
+    return `❌ Modelo está carregando.\n\n💡 Aguarde ${waitTime} e tente novamente.`;
   }
 
   if (message.includes('400') || message.includes('invalid')) {
-    return '❌ Erro: Prompt inválido ou parâmetros incorretos.\n\n💡 Tente simplificar sua descrição.';
+    return '❌ Prompt inválido.\n\n💡 Simplifique sua descrição.';
   }
 
   if (message.includes('ENOTFOUND') || message.includes('network')) {
-    return '❌ Erro de conexão.\n\n💡 Verifique sua internet e tente novamente.';
+    return '❌ Erro de conexão.\n\n💡 Verifique sua internet.';
   }
 
-  return `❌ Erro: ${message}\n\n💡 Tente novamente em alguns segundos.`;
-}
-
-/**
- * Salva imagem temporariamente (para debug)
- * 
- * @param {Buffer} buffer - Buffer da imagem
- * @param {string} filename - Nome do arquivo
- * @returns {string} Caminho do arquivo
- */
-export function saveImageTemp(buffer, filename = 'temp.png') {
-  const tempDir = '/tmp';
-  const filepath = path.join(tempDir, filename);
-  fs.writeFileSync(filepath, buffer);
-  return filepath;
-}
-
-/**
- * Utilitário: pausa a execução
- */
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return `❌ Erro: ${message}\n\n💡 Tente novamente.`;
 }
 
 /**
  * Valida prompt
- * 
- * @param {string} prompt - Prompt a validar
- * @returns {Object} Resultado da validação
  */
 export function validatePrompt(prompt) {
   if (!prompt || prompt.trim().length === 0) {
     return {
       valid: false,
-      error: '⚠️ Prompt vazio. Por favor, descreva a imagem que deseja criar.',
+      error: '⚠️ Prompt vazio. Descreva o que quer criar.',
     };
   }
 
@@ -198,7 +230,7 @@ export function validatePrompt(prompt) {
     };
   }
 
-  // Lista de palavras banidas (conteúdo inapropriado)
+  // Filtro de conteúdo inapropriado
   const bannedWords = ['nude', 'nsfw', 'explicit', 'porn', 'xxx'];
   const lowerPrompt = prompt.toLowerCase();
 
@@ -206,12 +238,27 @@ export function validatePrompt(prompt) {
     if (lowerPrompt.includes(word)) {
       return {
         valid: false,
-        error: '⚠️ Prompt contém conteúdo inapropriado. Por favor, use descrições adequadas.',
+        error: '⚠️ Conteúdo inapropriado. Use descrições adequadas.',
       };
     }
   }
 
-  return {
-    valid: true,
-  };
+  return { valid: true };
+}
+
+/**
+ * Salva mídia temporariamente
+ */
+export function saveMediaTemp(buffer, filename) {
+  const tempDir = '/tmp';
+  const filepath = path.join(tempDir, filename);
+  fs.writeFileSync(filepath, buffer);
+  return filepath;
+}
+
+/**
+ * Utilitário: pausa
+ */
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
