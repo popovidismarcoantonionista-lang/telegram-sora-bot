@@ -1,10 +1,10 @@
 /**
  * Módulo do Bot Telegram
- * Gerencia interações com usuários e orquestra chamadas à API
+ * Gerencia interações com usuários e orquestra chamadas à API Replicate
  */
 import { Telegraf } from 'telegraf';
 import config from './config.js';
-import { createVideoTask, waitForTaskCompletion } from './kieAiService.js';
+import { createVideoTask, waitForTaskCompletion } from './replicateService.js';
 
 /**
  * Inicializa e configura o bot do Telegram
@@ -27,9 +27,9 @@ export function createBot() {
   // Comando /start
   bot.start(async (ctx) => {
     const welcomeMessage = `
-🎬 *Bem-vindo ao Bot Sora 2 Video Generator!*
+🎬 *Bem-vindo ao Bot de Geração de Vídeos!*
 
-Este bot gera vídeos usando a API VideoGenAPI.com.
+Este bot gera vídeos usando a poderosa API *Replicate*.
 
 📝 *Como usar:*
 Envie uma descrição em texto do vídeo que deseja criar.
@@ -41,14 +41,15 @@ Um gato laranja caminhando em uma praia ao pôr do sol
 
 ⚙️ *Comandos disponíveis:*
 /start - Exibe esta mensagem
-/help - Instruções de uso
-/settings - Ver configurações atuais
+/help - Instruções de uso e dicas
+/models - Ver modelos disponíveis
+/info - Informações sobre custos
 
-🎨 *Configurações padrão:*
-• Formato: ${config.video.defaultAspectRatio}
-• Duração: ${config.video.defaultDuration} segundos
+🎨 *Modelo atual:* ${config.replicate.model}
 
 Envie seu primeiro prompt para começar! 🚀
+
+💡 *Dica:* A geração pode levar de 2 a 10 minutos dependendo do modelo e complexidade.
     `;
 
     await ctx.replyWithMarkdown(welcomeMessage);
@@ -57,55 +58,117 @@ Envie seu primeiro prompt para começar! 🚀
   // Comando /help
   bot.help(async (ctx) => {
     const helpMessage = `
-📖 *Guia de Uso*
+📖 *Guia de Uso Completo*
 
-*1. Envie uma descrição de vídeo*
+*1. Envie uma descrição detalhada*
 Seja específico e criativo! Descreva:
-• O que acontece no vídeo
-• Estilo visual (realista, animado, etc.)
-• Ambiente e iluminação
-• Movimentos da câmera
+• **O que acontece** no vídeo
+• **Estilo visual** (realista, animado, cartoon, etc.)
+• **Ambiente** e iluminação
+• **Movimentos** da câmera ou personagens
+• **Emoção** ou atmosfera desejada
 
-*Exemplos de prompts bons:*
-✅ "Uma astronauta flutuando no espaço com nebulosas coloridas ao fundo, câmera girando suavemente"
-✅ "Cachorro golden retriever correndo em câmera lenta em um campo de flores"
-✅ "Cidade futurista com carros voadores, estilo cyberpunk, chuva neon"
+*✅ Exemplos de prompts EXCELENTES:*
+• "Uma astronauta flutuando graciosamente no espaço profundo, com nebulosas roxas e azuis ao fundo, câmera girando lentamente"
+• "Cachorro golden retriever correndo em câmera lenta por um campo de flores amarelas ao pôr do sol dourado"
+• "Cidade futurista cyberpunk com arranha-céus neon, carros voadores, chuva torrencial, estilo Blade Runner"
+• "Cachoeira mágica em floresta encantada, água cristalina brilhante, borboletas luminosas, atmosfera mística"
 
-*Exemplos de prompts ruins:*
-❌ "Vídeo legal"
-❌ "Algo interessante"
+*❌ Exemplos de prompts RUINS:*
+• "Vídeo legal" (muito vago)
+• "Algo interessante" (sem contexto)
+• "Faça um vídeo" (sem detalhes)
 
 *2. Aguarde o processamento*
-A geração pode levar de 2 a 10 minutos dependendo da complexidade.
+⏱️ Tempo estimado: 2-10 minutos
+📊 Status: Você receberá atualizações de progresso
 
 *3. Receba seu vídeo*
-O bot enviará o link do vídeo assim que estiver pronto!
+🎥 Link direto para download
+🆔 ID da predição para referência
 
-💡 *Dicas:*
-• Seja específico mas não muito longo
-• Use adjetivos descritivos
-• Mencione estilo de câmera se quiser movimento específico
+💡 *Dicas Profissionais:*
+• Use adjetivos descritivos (brilhante, sombrio, vibrante)
+• Mencione estilo artístico (cinematográfico, 3D, anime)
+• Especifique movimento de câmera (zoom, pan, orbit)
+• Seja específico mas conciso (100-200 palavras ideal)
     `;
 
     await ctx.replyWithMarkdown(helpMessage);
   });
 
-  // Comando /settings
-  bot.command('settings', async (ctx) => {
-    const settingsMessage = `
-⚙️ *Configurações Atuais*
+  // Comando /models
+  bot.command('models', async (ctx) => {
+    const modelsMessage = `
+🎯 *Modelos Disponíveis na Replicate*
 
-📐 *Formato:* ${config.video.defaultAspectRatio}
-   (landscape = 16:9, portrait = 9:16)
+*Modelo Atual:* ${config.replicate.model}
 
-⏱️ *Duração:* ${config.video.defaultDuration} segundos
-   (5s ou 10s)
+*Modelos Populares:*
 
-ℹ️ Estas configurações são definidas no servidor.
-Para alterá-las, entre em contato com o administrador.
+1️⃣ *minimax/video-01*
+   • Modelo rápido e eficiente
+   • Ótima qualidade/custo
+   • ~$0.01-0.05 por vídeo
+
+2️⃣ *stability-ai/stable-video-diffusion*
+   • Alta qualidade, estável
+   • Melhor para vídeos curtos
+   • ~$0.05-0.10 por vídeo
+
+3️⃣ *genmo/mochi-1-preview*
+   • Qualidade cinematográfica
+   • Mais lento mas melhor resultado
+   • ~$0.10-0.20 por vídeo
+
+💰 *Custos Aproximados:*
+• Vídeo 5s: $0.01-0.05
+• Vídeo 10s: $0.05-0.10
+• Vídeo HD: +50% custo
+
+🔧 Para trocar de modelo, contate o administrador.
     `;
 
-    await ctx.replyWithMarkdown(settingsMessage);
+    await ctx.replyWithMarkdown(modelsMessage);
+  });
+
+  // Comando /info
+  bot.command('info', async (ctx) => {
+    const infoMessage = `
+ℹ️ *Informações do Bot*
+
+🤖 *Tecnologia:*
+• Plataforma: Replicate AI
+• Framework: Telegraf (Node.js)
+• Deploy: Render/Railway
+
+💰 *Sistema de Custos:*
+• Pay-as-you-go (pague apenas o que usar)
+• Sem mensalidade fixa
+• Preços variam por modelo (~$0.01-0.20/vídeo)
+
+⏱️ *Tempos de Processamento:*
+• Fila: 0-30s (depende da demanda)
+• Geração: 2-10min (depende do modelo)
+• Total: ~3-10min em média
+
+🔒 *Privacidade:*
+• Seus prompts são processados pela Replicate
+• Vídeos ficam disponíveis por 24h
+• Não armazenamos seus vídeos permanentemente
+
+📊 *Limites:*
+• Sem limite de requisições
+• Limitado apenas por créditos Replicate
+• Uma geração por vez por usuário
+
+🔗 *Links Úteis:*
+• Replicate: replicate.com
+• Código fonte: github.com/seu-repo
+• Suporte: Entre em contato via Telegram
+    `;
+
+    await ctx.replyWithMarkdown(infoMessage);
   });
 
   // Handler para mensagens de texto (prompts de vídeo)
@@ -119,40 +182,51 @@ Para alterá-las, entre em contato com o administrador.
 
     // Valida tamanho do prompt
     if (prompt.length < 10) {
-      await ctx.reply('⚠️ Por favor, envie uma descrição mais detalhada (mínimo 10 caracteres).');
+      await ctx.reply('⚠️ Por favor, envie uma descrição mais detalhada (mínimo 10 caracteres).\n\n💡 Use /help para ver exemplos de bons prompts!');
       return;
     }
 
-    if (prompt.length > 1000) {
-      await ctx.reply('⚠️ Descrição muito longa. Por favor, use no máximo 1000 caracteres.');
+    if (prompt.length > 2000) {
+      await ctx.reply('⚠️ Descrição muito longa. Por favor, use no máximo 2000 caracteres.\n\n💡 Seja conciso mas descritivo!');
       return;
     }
 
     // Inicia processamento
-    await ctx.reply('🎬 Recebido! Criando seu vídeo...');
+    await ctx.reply('🎬 Recebido! Iniciando geração do vídeo...\n\n⏳ Isso pode levar alguns minutos. Aguarde!');
 
     try {
-      // 1. Criar task na API
+      // 1. Criar predição na Replicate
       const createResult = await createVideoTask(prompt);
 
       if (!createResult.success) {
-        await ctx.reply(`${createResult.error}\n\n💡 Tente novamente com um prompt diferente.`);
+        await ctx.reply(`${createResult.error}\n\n💡 Tente novamente ou use /help para dicas.`);
         return;
       }
 
-      const requestId = createResult.requestId;
-      await ctx.reply(`✅ Task criada com sucesso!\n🆔 Request ID: \`${requestId}\`\n\n⏳ Processando... Isso pode levar alguns minutos.`, {
+      const predictionId = createResult.predictionId;
+      await ctx.reply(`✅ Predição criada!\n🆔 ID: \`${predictionId}\`\n\n⏳ Processando seu vídeo...`, {
         parse_mode: 'Markdown'
       });
 
       // 2. Aguardar conclusão com feedback de progresso
       let lastProgressMessage = null;
+      let lastProgress = 0;
 
-      const result = await waitForTaskCompletion(requestId, async (attempt, maxAttempts, status) => {
-        // Envia atualizações a cada 10 tentativas
-        if (attempt % 10 === 0) {
-          const progress = Math.round((attempt / maxAttempts) * 100);
-          const progressMessage = `⏳ Progresso: ${progress}%\nEstado: ${status}\nTentativa ${attempt}/${maxAttempts}`;
+      const result = await waitForTaskCompletion(predictionId, async (attempt, maxAttempts, status) => {
+        // Envia atualizações a cada 10 tentativas ou mudança de status
+        const progress = Math.round((attempt / maxAttempts) * 100);
+
+        if (attempt % 10 === 0 || progress - lastProgress >= 10) {
+          lastProgress = progress;
+
+          const statusEmoji = {
+            'starting': '🚀',
+            'processing': '⚙️',
+            'succeeded': '✅',
+            'failed': '❌'
+          };
+
+          const progressMessage = `${statusEmoji[status] || '⏳'} *Status:* ${status}\n📊 *Progresso:* ${progress}%\n🔄 *Tentativa:* ${attempt}/${maxAttempts}`;
 
           if (lastProgressMessage) {
             try {
@@ -160,20 +234,21 @@ Para alterá-las, entre em contato com o administrador.
                 ctx.chat.id,
                 lastProgressMessage.message_id,
                 null,
-                progressMessage
+                progressMessage,
+                { parse_mode: 'Markdown' }
               );
             } catch {
-              // Ignora erros de edição (mensagem não mudou)
+              // Ignora erros de edição
             }
           } else {
-            lastProgressMessage = await ctx.reply(progressMessage);
+            lastProgressMessage = await ctx.replyWithMarkdown(progressMessage);
           }
         }
       });
 
       // 3. Processar resultado
       if (!result.success) {
-        await ctx.reply(`${result.error}\n\n🆔 Request ID: \`${requestId}\``, {
+        await ctx.reply(`${result.error}\n\n🆔 Prediction ID: \`${predictionId}\`\n\n💡 Se o erro persistir, tente um prompt mais simples.`, {
           parse_mode: 'Markdown'
         });
         return;
@@ -187,19 +262,22 @@ Para alterá-las, entre em contato com o administrador.
 🎥 *Link do vídeo:*
 ${result.videoUrl}
 
-🆔 *Request ID:* \`${requestId}\`
-📊 *Estado:* ${result.status}
+🆔 *Prediction ID:* \`${predictionId}\`
+📊 *Status:* ${result.status}
 
 💡 *Próximos passos:*
 • Clique no link para baixar/visualizar
+• O link expira em 24 horas
 • Envie outro prompt para gerar mais vídeos
 • Use /help para dicas de prompts melhores
+
+🌟 *Gostou?* Compartilhe com seus amigos!
         `;
 
         await ctx.replyWithMarkdown(successMessage);
 
       } else {
-        await ctx.reply(`⚠️ Vídeo processado, mas nenhum link foi retornado.\n\n🆔 Request ID: \`${requestId}\`\n📊 Estado: ${result.status}`, {
+        await ctx.reply(`⚠️ Vídeo processado, mas nenhum link foi retornado.\n\n🆔 Prediction ID: \`${predictionId}\`\n📊 Status: ${result.status}\n\n💡 Tente novamente.`, {
           parse_mode: 'Markdown'
         });
       }
@@ -207,21 +285,23 @@ ${result.videoUrl}
     } catch (error) {
       console.error('❌ Erro crítico no processamento:', error);
 
-      await ctx.reply(`❌ Ocorreu um erro inesperado ao processar sua solicitação.\n\nDetalhes técnicos: ${error.message}\n\n💡 Por favor, tente novamente.`, {
-        parse_mode: 'Markdown'
-      });
+      await ctx.reply(`❌ Ocorreu um erro inesperado.\n\n🔧 Detalhes: ${error.message}\n\n💡 Por favor, tente novamente em alguns minutos.`);
     }
   });
 
   // Handler para outros tipos de mensagem
   bot.on('message', async (ctx) => {
-    await ctx.reply('⚠️ Por favor, envie apenas mensagens de texto com a descrição do vídeo que deseja criar.\n\nUse /help para mais informações.');
+    await ctx.reply('⚠️ Por favor, envie apenas *mensagens de texto* com a descrição do vídeo.\n\nUse /help para mais informações.', {
+      parse_mode: 'Markdown'
+    });
   });
 
   // Error handler global
   bot.catch((error, ctx) => {
     console.error('❌ Erro no bot:', error);
-    ctx.reply('❌ Ocorreu um erro. Por favor, tente novamente.').catch(() => {});
+    if (ctx) {
+      ctx.reply('❌ Ocorreu um erro. Por favor, tente novamente.').catch(() => {});
+    }
   });
 
   return bot;
