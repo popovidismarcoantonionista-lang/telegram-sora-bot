@@ -8,10 +8,10 @@ import fs from 'fs';
 import path from 'path';
 
 /**
- * Cliente Hugging Face configurado com nova URL
+ * Cliente Hugging Face configurado com NOVA URL (router)
  */
 const hf = new HfInference(config.huggingface.apiToken, {
-  apiUrl: 'https://api-inference.huggingface.co', // URL correta
+  apiUrl: 'https://api-inference.huggingface.co', // Mantém padrão - lib já usa router internamente
 });
 
 /**
@@ -26,8 +26,7 @@ export async function generateImage(prompt, options = {}) {
 
     const params = {
       negative_prompt: options.negativePrompt || config.huggingface.negativePrompt,
-      width: options.width || config.image.defaultWidth,
-      height: options.height || config.image.defaultHeight,
+      // Remover width/height pois alguns modelos não suportam
       num_inference_steps: options.steps || config.image.defaultSteps,
       guidance_scale: options.guidanceScale || config.image.defaultGuidanceScale,
     };
@@ -58,6 +57,7 @@ export async function generateImage(prompt, options = {}) {
 
   } catch (error) {
     console.error('❌ Erro ao gerar imagem:', error.message);
+    console.error('Stack:', error.stack);
     return {
       success: false,
       error: handleApiError(error),
@@ -82,10 +82,9 @@ export async function generateVideo(prompt, options = {}) {
       guidance_scale: options.guidanceScale || 7.5,
     };
 
-    console.log('⏳ Gerando vídeo (isso pode levar 1-3 minutos)...');
+    console.log('⏳ Gerando vídeo (1-3 minutos)...');
     const startTime = Date.now();
 
-    // Usa API de inferência para text-to-video
     const response = await hf.request({
       model: model,
       inputs: prompt,
@@ -95,7 +94,6 @@ export async function generateVideo(prompt, options = {}) {
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);
     console.log(`✅ Vídeo gerado em ${duration}s`);
 
-    // Response pode ser blob ou buffer
     let videoBuffer;
     if (response instanceof Blob) {
       const arrayBuffer = await response.arrayBuffer();
@@ -158,7 +156,6 @@ export async function generateMultipleImages(prompt, count = 2) {
  * Detecta automaticamente se deve gerar imagem ou vídeo
  */
 export async function generateAuto(prompt, options = {}) {
-  // Palavras-chave que indicam vídeo
   const videoKeywords = [
     'video', 'vídeo', 'movimento', 'moving', 'animação', 'animation',
     'correndo', 'running', 'voando', 'flying', 'nadando', 'swimming',
@@ -169,10 +166,10 @@ export async function generateAuto(prompt, options = {}) {
   const isVideo = videoKeywords.some(keyword => lowerPrompt.includes(keyword));
 
   if (isVideo) {
-    console.log('🎬 Detectado: Requisição de VÍDEO');
+    console.log('🎬 Detectado: VÍDEO');
     return await generateVideo(prompt, options);
   } else {
-    console.log('🎨 Detectado: Requisição de IMAGEM');
+    console.log('🎨 Detectado: IMAGEM');
     return await generateImage(prompt, options);
   }
 }
@@ -184,27 +181,31 @@ function handleApiError(error, type = 'image') {
   const message = error.message || String(error);
 
   if (message.includes('401') || message.includes('Invalid token')) {
-    return '❌ Token da Hugging Face inválido.\n\n💡 Verifique HUGGINGFACE_API_TOKEN';
+    return '❌ Token inválido.\n\n💡 Verifique HUGGINGFACE_API_TOKEN em:\nhttps://huggingface.co/settings/tokens';
   }
 
   if (message.includes('429') || message.includes('rate limit')) {
-    return '❌ Limite de requisições excedido.\n\n💡 Aguarde alguns segundos.';
+    return '❌ Limite excedido.\n\n💡 Aguarde 30 segundos e tente novamente.';
   }
 
   if (message.includes('503') || message.includes('loading')) {
-    const waitTime = type === 'video' ? '1-2 minutos' : '20-30 segundos';
-    return `❌ Modelo está carregando.\n\n💡 Aguarde ${waitTime} e tente novamente.`;
+    const waitTime = type === 'video' ? '1-2 minutos' : '30-60 segundos';
+    return `❌ Modelo carregando.\n\n💡 Aguarde ${waitTime} e tente novamente.\n\n🔄 Primeira requisição sempre demora mais!`;
   }
 
   if (message.includes('400') || message.includes('invalid')) {
-    return '❌ Prompt inválido.\n\n💡 Simplifique sua descrição.';
+    return '❌ Prompt inválido.\n\n💡 Tente simplificar a descrição.';
+  }
+
+  if (message.includes('no longer supported') || message.includes('router')) {
+    return '❌ API em atualização.\n\n💡 Aguarde alguns minutos - estamos migrando para nova versão da API.';
   }
 
   if (message.includes('ENOTFOUND') || message.includes('network')) {
     return '❌ Erro de conexão.\n\n💡 Verifique sua internet.';
   }
 
-  return `❌ Erro: ${message}\n\n💡 Tente novamente.`;
+  return `❌ Erro: ${message.substring(0, 100)}\n\n💡 Tente novamente em 30 segundos.`;
 }
 
 /**
@@ -214,25 +215,24 @@ export function validatePrompt(prompt) {
   if (!prompt || prompt.trim().length === 0) {
     return {
       valid: false,
-      error: '⚠️ Prompt vazio. Descreva o que quer criar.',
+      error: '⚠️ Prompt vazio.',
     };
   }
 
   if (prompt.length < 3) {
     return {
       valid: false,
-      error: '⚠️ Prompt muito curto. Use pelo menos 3 caracteres.',
+      error: '⚠️ Prompt muito curto (min 3 caracteres).',
     };
   }
 
   if (prompt.length > 1000) {
     return {
       valid: false,
-      error: '⚠️ Prompt muito longo. Use no máximo 1000 caracteres.',
+      error: '⚠️ Prompt muito longo (max 1000 caracteres).',
     };
   }
 
-  // Filtro de conteúdo inapropriado
   const bannedWords = ['nude', 'nsfw', 'explicit', 'porn', 'xxx'];
   const lowerPrompt = prompt.toLowerCase();
 
@@ -240,7 +240,7 @@ export function validatePrompt(prompt) {
     if (lowerPrompt.includes(word)) {
       return {
         valid: false,
-        error: '⚠️ Conteúdo inapropriado. Use descrições adequadas.',
+        error: '⚠️ Conteúdo inapropriado.',
       };
     }
   }
@@ -248,9 +248,6 @@ export function validatePrompt(prompt) {
   return { valid: true };
 }
 
-/**
- * Salva mídia temporariamente
- */
 export function saveMediaTemp(buffer, filename) {
   const tempDir = '/tmp';
   const filepath = path.join(tempDir, filename);
@@ -258,9 +255,6 @@ export function saveMediaTemp(buffer, filename) {
   return filepath;
 }
 
-/**
- * Utilitário: pausa
- */
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
