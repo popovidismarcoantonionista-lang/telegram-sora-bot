@@ -12,23 +12,21 @@ const config = {
     botToken: process.env.TELEGRAM_BOT_TOKEN,
   },
 
-  // Replicate API
-  replicate: {
-    apiToken: process.env.REPLICATE_API_TOKEN,
-    // Modelo padrão: minimax-video (outros: stability-ai/stable-video-diffusion, genmo/mochi-1-preview)
-    model: process.env.REPLICATE_MODEL || 'minimax/video-01',
+  // Hugging Face
+  huggingface: {
+    apiToken: process.env.HUGGINGFACE_API_TOKEN,
+    // Modelo padrão: Stable Diffusion XL (melhor qualidade)
+    // Alternativas: stabilityai/stable-diffusion-2-1, runwayml/stable-diffusion-v1-5
+    model: process.env.HF_MODEL || 'stabilityai/stable-diffusion-xl-base-1.0',
+    negativePrompt: process.env.NEGATIVE_PROMPT || 'blurry, bad quality, distorted, ugly, watermark',
   },
 
-  // Configurações de vídeo
-  video: {
-    defaultSteps: parseInt(process.env.DEFAULT_STEPS) || 50,
-    defaultGuidanceScale: parseFloat(process.env.DEFAULT_GUIDANCE_SCALE) || 7.5,
-  },
-
-  // Configurações de polling
-  polling: {
-    intervalMs: parseInt(process.env.POLLING_INTERVAL_MS) || 3000,
-    maxAttempts: parseInt(process.env.MAX_POLLING_ATTEMPTS) || 200,
+  // Configurações de imagem
+  image: {
+    defaultWidth: parseInt(process.env.IMAGE_WIDTH) || 1024,
+    defaultHeight: parseInt(process.env.IMAGE_HEIGHT) || 1024,
+    defaultSteps: parseInt(process.env.INFERENCE_STEPS) || 30,
+    defaultGuidanceScale: parseFloat(process.env.GUIDANCE_SCALE) || 7.5,
   },
 };
 
@@ -42,14 +40,15 @@ export function validateConfig() {
     errors.push('❌ TELEGRAM_BOT_TOKEN não configurado');
   }
 
-  if (!config.replicate.apiToken) {
-    errors.push('❌ REPLICATE_API_TOKEN não configurado');
+  if (!config.huggingface.apiToken) {
+    errors.push('❌ HUGGINGFACE_API_TOKEN não configurado');
   }
 
   if (errors.length > 0) {
     console.error('\n🚨 Erros de configuração:\n');
     errors.forEach(error => console.error(error));
-    console.error('\n📝 Copie .env.example para .env e configure suas credenciais.\n');
+    console.error('\n📝 Configure as variáveis de ambiente necessárias.\n');
+    console.error('💡 Obtenha seu token em: https://huggingface.co/settings/tokens\n');
     process.exit(1);
   }
 
