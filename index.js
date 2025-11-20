@@ -1,7 +1,7 @@
 /**
- * Bot Telegram - Kie.ai Sora 2 Text To Video
+ * Bot Telegram - VideoGenAPI Sora 2
  * 
- * Este bot permite gerar vídeos usando a API Kie.ai Sora 2
+ * Este bot permite gerar vídeos usando a API VideoGenAPI.com
  * através de conversas no Telegram.
  * 
  * Autor: Rube AI
@@ -16,7 +16,7 @@ import { createBot } from './telegramBot.js';
  */
 async function main() {
   console.log('\n🤖 ========================================');
-  console.log('   Bot Telegram - Kie.ai Sora 2 Video');
+  console.log('   Bot Telegram - VideoGenAPI Sora 2');
   console.log('========================================\n');
 
   // 1. Valida configurações
