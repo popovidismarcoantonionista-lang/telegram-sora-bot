@@ -1,274 +1,362 @@
-# 🎬 Bot Telegram - Replicate Video AI
+# 🎨 Bot Telegram - AI Image Generator
 
-Bot do Telegram que gera vídeos usando a poderosa plataforma **Replicate AI**. Desenvolvido em Node.js com Telegraf.
+Bot do Telegram que gera **imagens incríveis** usando **Inteligência Artificial**.
 
-## 📋 Características
+✨ **100% GRATUITO** ✨
 
-✅ Integração com Replicate (múltiplos modelos de IA)  
-✅ Interface amigável via Telegram  
-✅ Polling automático do status de geração  
-✅ Feedback de progresso em tempo real  
-✅ Tratamento robusto de erros  
-✅ Código modular e bem documentado  
-✅ **Pay-as-you-go** - Pague apenas o que usar (~$0.01-0.10/vídeo)
+Powered by **Hugging Face** 🤗 + **Stable Diffusion** 🎨
 
-## 🚀 Requisitos
+---
 
-- **Node.js** v18 ou superior
-- **npm** ou **yarn**
-- **Bot Token do Telegram** (obtenha com [@BotFather](https://t.me/botfather))
-- **API Token da Replicate** (obtenha em [replicate.com](https://replicate.com))
+## 🌟 Características
+
+✅ **Totalmente Gratuito** - Sem custos, sem cartão de crédito  
+✅ **Geração Rápida** - 10-30 segundos por imagem  
+✅ **Alta Qualidade** - 1024x1024 pixels  
+✅ **Fácil de Usar** - Apenas descreva o que quer  
+✅ **Múltiplas Variações** - Gere 2-4 imagens de uma vez  
+✅ **Open Source** - Código aberto no GitHub  
+
+---
+
+## 🚀 Demo
+
+**Prompt:** "A majestic lion with golden mane, sunset background, photorealistic"
+
+**Resultado:** Imagem fotorrealista de um leão majestoso com juba dourada! 🦁
+
+---
 
 ## 📦 Instalação
 
-### 1. Clone o projeto
+### Requisitos
+
+- **Node.js** v18+
+- **npm** ou **yarn**
+- **Token do Telegram** ([@BotFather](https://t.me/botfather))
+- **Token da Hugging Face** ([huggingface.co/settings/tokens](https://huggingface.co/settings/tokens))
+
+### Passos
 
 ```bash
+# 1. Clone o repositório
 git clone https://github.com/popovidismarcoantonionista-lang/telegram-sora-bot.git
 cd telegram-sora-bot
-```
 
-### 2. Instale as dependências
-
-```bash
+# 2. Instale dependências
 npm install
-```
 
-### 3. Configure as variáveis de ambiente
-
-```bash
+# 3. Configure variáveis de ambiente
 cp .env.example .env
 nano .env
+
+# 4. Execute o bot
+npm start
 ```
 
-**Arquivo `.env`:**
+---
+
+## 🔑 Configuração
+
+### Arquivo `.env`
 
 ```env
 # Token do Telegram (obtenha com @BotFather)
 TELEGRAM_BOT_TOKEN=1234567890:ABCdefGHIjklMNOpqrsTUVwxyz
 
-# Token da Replicate (obtenha em https://replicate.com/account/api-tokens)
-REPLICATE_API_TOKEN=r8_xxxxxxxxxxxxxxxxxxxx
+# Token da Hugging Face (GRÁTIS em huggingface.co/settings/tokens)
+HUGGINGFACE_API_TOKEN=hf_xxxxxxxxxxxxxxxxxxxx
 
-# Modelo de IA (opcional)
-REPLICATE_MODEL=minimax/video-01
+# Modelo (opcional - padrão: SDXL)
+HF_MODEL=stabilityai/stable-diffusion-xl-base-1.0
 
-# Configurações opcionais
-DEFAULT_STEPS=50
-DEFAULT_GUIDANCE_SCALE=7.5
-POLLING_INTERVAL_MS=3000
-MAX_POLLING_ATTEMPTS=200
+# Qualidade (opcional)
+IMAGE_WIDTH=1024
+IMAGE_HEIGHT=1024
+INFERENCE_STEPS=30
+GUIDANCE_SCALE=7.5
 ```
 
-### 4. Execute o bot
+### Obtendo Token Hugging Face (GRÁTIS)
 
-```bash
-npm start
-```
+1. **Acesse:** [huggingface.co](https://huggingface.co)
+2. **Crie conta gratuita** (sem cartão)
+3. **Vá para:** [Settings > Access Tokens](https://huggingface.co/settings/tokens)
+4. **Crie novo token** (Read access)
+5. **Copie e cole no `.env`**
 
-## 🔑 Como Obter API Token da Replicate
-
-1. Acesse [replicate.com](https://replicate.com)
-2. Crie uma conta (gratuita)
-3. Vá para [Account > API Tokens](https://replicate.com/account/api-tokens)
-4. Crie um novo token
-5. Adicione **créditos** ($10 = ~100-1000 vídeos dependendo do modelo)
-6. Cole o token no arquivo `.env`
-
-## 💰 Custos
-
-| Modelo | Custo Aproximado | Qualidade | Tempo |
-|--------|------------------|-----------|-------|
-| minimax/video-01 | $0.01-0.05/vídeo | Boa | 2-5min |
-| stability-ai/stable-video-diffusion | $0.05-0.10/vídeo | Alta | 3-7min |
-| genmo/mochi-1-preview | $0.10-0.20/vídeo | Excelente | 5-10min |
-
-**💡 Dica:** Comece com $10 de crédito para testar!
+---
 
 ## 📱 Como Usar
 
-### Comandos disponíveis:
+### Comandos Disponíveis
 
-- `/start` - Exibe mensagem de boas-vindas
-- `/help` - Guia completo de uso e dicas
-- `/models` - Ver modelos disponíveis e custos
-- `/info` - Informações sobre o bot
+| Comando | Descrição |
+|---------|-----------|
+| `/start` | Mensagem de boas-vindas |
+| `/help` | Guia completo + dicas |
+| `/examples` | Ver exemplos de prompts |
+| `/multiple` | Gerar várias imagens |
+| `/info` | Informações do bot |
 
-### Gerando vídeos:
+### Gerando Imagens
 
-1. Envie uma **descrição detalhada** do vídeo
-2. Aguarde o processamento (2-10 minutos)
-3. Receba o link do vídeo gerado!
+**Simples:** Envie uma descrição
 
-### Exemplos de prompts:
+```
+Um gato astronauta flutuando no espaço
+```
 
-✅ **Excelentes:**
-- "Uma astronauta flutuando no espaço com nebulosas coloridas ao fundo, câmera girando suavemente"
-- "Cachorro golden retriever correndo em câmera lenta em um campo de flores douradas"
-- "Cidade futurista cyberpunk com arranha-céus neon, carros voadores, chuva torrencial"
+**Múltiplas:** Adicione um número (2-4)
 
-❌ **Ruins:**
-- "Vídeo legal" (muito vago)
-- "Algo interessante" (sem contexto)
+```
+Cidade futurista cyberpunk 3
+```
 
-## 🎯 Modelos Disponíveis
+Isso gerará 3 variações!
 
-### 1. minimax/video-01 (Recomendado)
-- ✅ Ótimo custo-benefício
-- ✅ Rápido (2-5 min)
-- ✅ Boa qualidade
-- 💰 ~$0.01-0.05/vídeo
+---
 
-### 2. stability-ai/stable-video-diffusion
-- ✅ Alta qualidade
-- ✅ Estável e consistente
-- ⏱️ Moderado (3-7 min)
-- 💰 ~$0.05-0.10/vídeo
+## 🎯 Exemplos de Prompts
 
-### 3. genmo/mochi-1-preview
-- ✅ Qualidade cinematográfica
-- ⏱️ Mais lento (5-10 min)
-- 💰 ~$0.10-0.20/vídeo
+### 📸 Fotografia Profissional
 
-Para trocar de modelo, edite `REPLICATE_MODEL` no `.env`.
+```
+Portrait of a young woman with blue eyes, golden hour lighting, 
+professional photography, bokeh background, 50mm lens, 4k
+```
+
+### 🎨 Arte Digital
+
+```
+Dragon flying over mountain peaks, epic fantasy art, dramatic clouds, 
+digital painting, highly detailed, trending on artstation
+```
+
+### 🌆 Cenários Urbanos
+
+```
+Futuristic Tokyo street at night, neon signs, rain reflections, 
+cyberpunk aesthetic, cinematic composition, 8k
+```
+
+### 🐾 Animais
+
+```
+Majestic white wolf in snowy forest, moonlight, mystical atmosphere, 
+photorealistic, award winning photography
+```
+
+### 🎭 Fantasia
+
+```
+Fairy castle floating in clouds, magical glowing crystals, rainbow waterfall, 
+fantasy illustration, dreamy, vibrant colors
+```
+
+### 🤖 Ficção Científica
+
+```
+Advanced AI robot in laboratory, holographic displays, blue lighting, 
+concept art, octane render, futuristic
+```
+
+---
+
+## 💡 Dicas Para Prompts Melhores
+
+### ✅ O que FAZER:
+
+- ✓ Seja específico e detalhado
+- ✓ Use palavras-chave de qualidade: "4k", "detailed", "high quality"
+- ✓ Especifique o estilo: "photorealistic", "digital art", "oil painting"
+- ✓ Descreva iluminação: "golden hour", "dramatic lighting", "neon"
+- ✓ Adicione atmosfera: "mystical", "serene", "epic"
+
+### ❌ O que EVITAR:
+
+- ✗ Prompts muito vagos ("algo legal")
+- ✗ Sem detalhes ("uma pessoa")
+- ✗ Muitas ideias misturadas
+- ✗ Conteúdo inapropriado
+
+---
 
 ## 🏗️ Estrutura do Projeto
 
 ```
 telegram-sora-bot/
-├── index.js              # Arquivo principal
-├── config.js             # Configurações
-├── replicateService.js   # Integração com Replicate
-├── telegramBot.js        # Lógica do bot
-├── package.json          # Dependências
-├── .env.example          # Exemplo de configuração
-└── README.md             # Este arquivo
+├── index.js                  # Arquivo principal
+├── config.js                 # Configurações
+├── huggingFaceService.js     # Integração com Hugging Face
+├── telegramBot.js            # Lógica do bot
+├── package.json              # Dependências
+├── .env.example              # Exemplo de configuração
+└── README.md                 # Este arquivo
 ```
+
+---
 
 ## 🚢 Deploy em Produção
 
-### **Render (Recomendado)**
+### Render (Recomendado)
 
 1. Crie conta no [Render](https://render.com)
-2. Crie um **Background Worker** (não Web Service)
+2. **New** → **Background Worker** (não Web Service!)
 3. Conecte seu repositório GitHub
-4. Configure as variáveis de ambiente:
+4. Configure env vars:
    ```
    TELEGRAM_BOT_TOKEN=...
-   REPLICATE_API_TOKEN=...
+   HUGGINGFACE_API_TOKEN=...
    ```
-5. Deploy automático! ✅
+5. Deploy! 🚀
 
-### **Railway**
+### Railway
 
 1. Crie conta no [Railway](https://railway.app)
 2. New Project → Deploy from GitHub
 3. Configure env vars
-4. Deploy automático! ✅
+4. Deploy! 🚀
 
-### **VPS (DigitalOcean, AWS, etc.)**
+### VPS / Cloud
 
 ```bash
-# Use PM2
+# Use PM2 para gerenciar
 npm install -g pm2
-pm2 start index.js --name telegram-video-bot
+pm2 start index.js --name ai-image-bot
 pm2 save
 pm2 startup
 ```
+
+---
 
 ## 🐛 Troubleshooting
 
 ### Bot não inicia
 
+**Erro:** `TELEGRAM_BOT_TOKEN não configurado`
+
+**Solução:** Configure o token no `.env`
+
+### Erro 401
+
+**Erro:** `Token da Hugging Face inválido`
+
+**Solução:** Verifique seu token em [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
+
+### Erro 503 - Model Loading
+
+**Erro:** `Modelo está carregando`
+
+**Solução:** Aguarde 20-30 segundos e tente novamente (modelos "dormem" quando não usados)
+
+### Imagem demora muito
+
+- ⏱️ Normal: 10-30 segundos
+- 🔄 Primeira geração: até 60s (modelo carregando)
+- 💡 Use prompts mais simples para resultados mais rápidos
+
+---
+
+## 📊 Performance
+
+| Métrica | Valor |
+|---------|-------|
+| Tempo médio | 10-30s |
+| Resolução | 1024x1024 |
+| Qualidade | Alta (SDXL) |
+| Custo | **GRÁTIS** |
+| Rate limit | ~100 img/hora |
+
+---
+
+## 🎨 Modelos Disponíveis
+
+### 1. Stable Diffusion XL (Padrão) ⭐
+
+```env
+HF_MODEL=stabilityai/stable-diffusion-xl-base-1.0
 ```
-❌ TELEGRAM_BOT_TOKEN não configurado
+
+- ✅ Melhor qualidade
+- ✅ Alta resolução
+- ⏱️ ~20-30s
+
+### 2. Stable Diffusion 2.1
+
+```env
+HF_MODEL=stabilityai/stable-diffusion-2-1
 ```
-**Solução:** Configure o token no arquivo `.env`
 
-### Erro 401 Unauthorized
+- ✅ Boa qualidade
+- ✅ Mais rápido
+- ⏱️ ~10-20s
 
+### 3. Stable Diffusion 1.5
+
+```env
+HF_MODEL=runwayml/stable-diffusion-v1-5
 ```
-❌ API Token inválido
-```
-**Solução:** Verifique seu `REPLICATE_API_TOKEN` em [replicate.com/account/api-tokens](https://replicate.com/account/api-tokens)
 
-### Erro 402 Payment Required
+- ✅ Clássico
+- ✅ Muito rápido
+- ⏱️ ~5-15s
 
-```
-❌ Créditos insuficientes
-```
-**Solução:** Adicione créditos em [replicate.com/account/billing](https://replicate.com/account/billing)
+---
 
-### Vídeo demora muito
+## 🔒 Privacidade & Segurança
 
-- ⏱️ Normal: 2-10 minutos dependendo do modelo
-- 🔄 Verifique fila da Replicate em tempo de alta demanda
-- 💡 Use modelos mais rápidos (minimax/video-01)
+- ✅ Código 100% open source
+- ✅ Sem armazenamento de imagens
+- ✅ Processamento via Hugging Face (confiável)
+- ✅ Sem coleta de dados pessoais
+- ✅ Token nunca exposto
 
-## 🔒 Segurança
-
-⚠️ **IMPORTANTE:**
-- Nunca comite o arquivo `.env`
-- Mantenha suas API Tokens em segredo
-- Use variáveis de ambiente em produção
-- Monitore seus gastos na Replicate
-
-## 📊 Monitoramento de Custos
-
-Acompanhe seus gastos em:
-- [Replicate Billing](https://replicate.com/account/billing)
-- Ver histórico de previsões e custos
-- Configurar alertas de gastos
+---
 
 ## 🤝 Contribuindo
 
 Contribuições são bem-vindas!
 
-1. Fork o projeto
-2. Crie uma branch: `git checkout -b feature/nova-feature`
-3. Commit: `git commit -m 'Add nova feature'`
-4. Push: `git push origin feature/nova-feature`
-5. Abra um Pull Request
-
-## 📄 Licença
-
-MIT License
-
-## 🔗 Links Úteis
-
-- [Replicate](https://replicate.com)
-- [Replicate API Docs](https://replicate.com/docs)
-- [Telegraf.js Docs](https://telegraf.js.org/)
-- [BotFather](https://t.me/botfather)
-- [Repositório GitHub](https://github.com/popovidismarcoantonionista-lang/telegram-sora-bot)
-
-## 💡 Dicas Pro
-
-1. **Seja específico** nos prompts - quanto mais detalhes, melhor
-2. **Teste modelos diferentes** - cada um tem estilo próprio
-3. **Monitore gastos** - configure alertas na Replicate
-4. **Use cache** - Replicate pode cachear predições similares
-5. **Batch processing** - gere vários vídeos de uma vez para economizar
-
-## 🌟 Exemplos de Uso
-
-### Vídeo de Marketing
-```
-Produto flutuando em fundo minimalista branco, luz suave, movimento rotacional lento, estilo comercial
-```
-
-### Vídeo Artístico
-```
-Ondas abstratas de tinta colorida se misturando em água cristalina, câmera submersa, iluminação natural
-```
-
-### Vídeo de Natureza
-```
-Floresta enevoada ao amanhecer, raios de sol atravessando árvores, pássaros voando, atmosfera serena
-```
+1. **Fork** o projeto
+2. **Crie branch:** `git checkout -b feature/nova-feature`
+3. **Commit:** `git commit -m 'Add feature'`
+4. **Push:** `git push origin feature/nova-feature`
+5. **Pull Request**
 
 ---
 
-**Desenvolvido com ❤️ usando Node.js, Telegraf e Replicate AI**
+## 📄 Licença
 
-⭐ Se gostou do projeto, dê uma estrela no GitHub!
+MIT License - Use livremente!
+
+---
+
+## 🔗 Links Úteis
+
+- 🤗 [Hugging Face](https://huggingface.co)
+- 📖 [Hugging Face Docs](https://huggingface.co/docs/api-inference)
+- 🎨 [Stable Diffusion](https://stability.ai)
+- 🤖 [Telegraf.js](https://telegraf.js.org)
+- 💬 [BotFather](https://t.me/botfather)
+
+---
+
+## 💬 Suporte
+
+Encontrou um bug? Tem uma sugestão?
+
+- 🐛 [Abra uma Issue](https://github.com/popovidismarcoantonionista-lang/telegram-sora-bot/issues)
+- 💡 [Inicie uma Discussion](https://github.com/popovidismarcoantonionista-lang/telegram-sora-bot/discussions)
+
+---
+
+## 🌟 Mostre Seu Apoio
+
+Se este projeto te ajudou, deixe uma ⭐ no GitHub!
+
+---
+
+**Desenvolvido com ❤️ usando Node.js, Telegraf e Hugging Face**
+
+**100% Gratuito & Open Source** 🎨✨
