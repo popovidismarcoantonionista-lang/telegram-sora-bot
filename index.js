@@ -1,8 +1,8 @@
 /**
- * Bot Telegram - Replicate Video AI
+ * Bot Telegram - AI Image Generator
  * 
- * Este bot permite gerar vídeos usando a API Replicate
- * através de conversas no Telegram.
+ * Gera imagens incríveis usando Hugging Face + Stable Diffusion
+ * 100% Gratuito e Open Source
  * 
  * Autor: Rube AI
  * Data: 2025
@@ -12,11 +12,12 @@ import config, { validateConfig } from './config.js';
 import { createBot } from './telegramBot.js';
 
 /**
- * Função principal - inicializa e roda o bot
+ * Função principal
  */
 async function main() {
-  console.log('\n🤖 ========================================');
-  console.log('   Bot Telegram - Replicate Video AI');
+  console.log('\n🎨 ========================================');
+  console.log('   Bot Telegram - AI Image Generator');
+  console.log('   Powered by Hugging Face 🤗');
   console.log('========================================\n');
 
   // 1. Valida configurações
@@ -24,41 +25,43 @@ async function main() {
   validateConfig();
   console.log('');
 
-  // 2. Mostra info do modelo
-  console.log(`🎯 Modelo configurado: ${config.replicate.model}`);
+  // 2. Info do modelo
+  const modelName = config.huggingface.model.split('/').pop();
+  console.log(`🎯 Modelo: ${modelName}`);
+  console.log(`📐 Resolução: ${config.image.defaultWidth}x${config.image.defaultHeight}`);
   console.log('');
 
-  // 3. Cria instância do bot
-  console.log('🚀 Inicializando bot do Telegram...');
+  // 3. Cria bot
+  console.log('🚀 Inicializando bot...');
   const bot = createBot();
 
-  // 4. Configura handlers de processo
+  // 4. Setup handlers
   setupProcessHandlers(bot);
 
-  // 5. Inicia o bot
+  // 5. Launch
   console.log('✅ Bot iniciado com sucesso!');
   console.log('📡 Aguardando mensagens...\n');
 
   await bot.launch();
 
-  console.log('🎉 Bot está rodando! Pressione Ctrl+C para parar.\n');
+  console.log('🎉 Bot rodando! Ctrl+C para parar.\n');
+  console.log('💡 Dica: Envie descrições detalhadas para melhores resultados!\n');
 }
 
 /**
- * Configura handlers para encerramento gracioso
+ * Handlers de processo
  */
 function setupProcessHandlers(bot) {
-  // Encerramento gracioso
   const gracefulShutdown = async (signal) => {
-    console.log(`\n\n⚠️  Recebido sinal ${signal}`);
+    console.log(`\n\n⚠️  Sinal ${signal} recebido`);
     console.log('🛑 Encerrando bot...');
 
     try {
       await bot.stop(signal);
-      console.log('✅ Bot encerrado com sucesso');
+      console.log('✅ Bot encerrado');
       process.exit(0);
     } catch (error) {
-      console.error('❌ Erro ao encerrar bot:', error);
+      console.error('❌ Erro ao encerrar:', error);
       process.exit(1);
     }
   };
@@ -66,20 +69,18 @@ function setupProcessHandlers(bot) {
   process.once('SIGINT', () => gracefulShutdown('SIGINT'));
   process.once('SIGTERM', () => gracefulShutdown('SIGTERM'));
 
-  // Handler de erros não tratados
   process.on('uncaughtException', (error) => {
     console.error('❌ Erro não tratado:', error);
     process.exit(1);
   });
 
-  process.on('unhandledRejection', (reason, promise) => {
-    console.error('❌ Promise rejeitada não tratada:', reason);
+  process.on('unhandledRejection', (reason) => {
+    console.error('❌ Promise rejeitada:', reason);
   });
 }
 
-// Executa a aplicação
+// Inicia aplicação
 main().catch((error) => {
-  console.error('\n❌ Erro fatal ao iniciar bot:\n');
-  console.error(error);
+  console.error('\n❌ Erro fatal:\n', error);
   process.exit(1);
 });
