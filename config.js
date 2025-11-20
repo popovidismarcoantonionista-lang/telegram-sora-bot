@@ -12,22 +12,23 @@ const config = {
     botToken: process.env.TELEGRAM_BOT_TOKEN,
   },
 
-  // VideoGenAPI
-  videoGenApi: {
-    apiKey: process.env.VIDEOGENAPI_API_KEY,
-    baseUrl: process.env.VIDEOGENAPI_BASE_URL || 'https://videogenapi.com/api/v1',
+  // Replicate API
+  replicate: {
+    apiToken: process.env.REPLICATE_API_TOKEN,
+    // Modelo padrão: minimax-video (outros: stability-ai/stable-video-diffusion, genmo/mochi-1-preview)
+    model: process.env.REPLICATE_MODEL || 'minimax/video-01',
   },
 
   // Configurações de vídeo
   video: {
-    defaultAspectRatio: process.env.DEFAULT_ASPECT_RATIO || 'landscape',
-    defaultDuration: parseInt(process.env.DEFAULT_DURATION) || 5,
+    defaultSteps: parseInt(process.env.DEFAULT_STEPS) || 50,
+    defaultGuidanceScale: parseFloat(process.env.DEFAULT_GUIDANCE_SCALE) || 7.5,
   },
 
   // Configurações de polling
   polling: {
-    intervalMs: parseInt(process.env.POLLING_INTERVAL_MS) || 5000,
-    maxAttempts: parseInt(process.env.MAX_POLLING_ATTEMPTS) || 120,
+    intervalMs: parseInt(process.env.POLLING_INTERVAL_MS) || 3000,
+    maxAttempts: parseInt(process.env.MAX_POLLING_ATTEMPTS) || 200,
   },
 };
 
@@ -41,8 +42,8 @@ export function validateConfig() {
     errors.push('❌ TELEGRAM_BOT_TOKEN não configurado');
   }
 
-  if (!config.videoGenApi.apiKey) {
-    errors.push('❌ VIDEOGENAPI_API_KEY não configurado');
+  if (!config.replicate.apiToken) {
+    errors.push('❌ REPLICATE_API_TOKEN não configurado');
   }
 
   if (errors.length > 0) {
