@@ -1,7 +1,7 @@
 /**
- * Bot Telegram - VideoGenAPI Sora 2
+ * Bot Telegram - Replicate Video AI
  * 
- * Este bot permite gerar vídeos usando a API VideoGenAPI.com
+ * Este bot permite gerar vídeos usando a API Replicate
  * através de conversas no Telegram.
  * 
  * Autor: Rube AI
@@ -16,7 +16,7 @@ import { createBot } from './telegramBot.js';
  */
 async function main() {
   console.log('\n🤖 ========================================');
-  console.log('   Bot Telegram - VideoGenAPI Sora 2');
+  console.log('   Bot Telegram - Replicate Video AI');
   console.log('========================================\n');
 
   // 1. Valida configurações
@@ -24,14 +24,18 @@ async function main() {
   validateConfig();
   console.log('');
 
-  // 2. Cria instância do bot
+  // 2. Mostra info do modelo
+  console.log(`🎯 Modelo configurado: ${config.replicate.model}`);
+  console.log('');
+
+  // 3. Cria instância do bot
   console.log('🚀 Inicializando bot do Telegram...');
   const bot = createBot();
 
-  // 3. Configura handlers de processo
+  // 4. Configura handlers de processo
   setupProcessHandlers(bot);
 
-  // 4. Inicia o bot
+  // 5. Inicia o bot
   console.log('✅ Bot iniciado com sucesso!');
   console.log('📡 Aguardando mensagens...\n');
 
