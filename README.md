@@ -1,27 +1,27 @@
-# 🎬 Bot Telegram - VideoGenAPI Sora 2 Text To Video
+# 🎬 Bot Telegram - Replicate Video AI
 
-Bot do Telegram que gera vídeos usando a API oficial **VideoGenAPI.com Sora 2 Text To Video**. Desenvolvido em Node.js com Telegraf e Axios.
+Bot do Telegram que gera vídeos usando a poderosa plataforma **Replicate AI**. Desenvolvido em Node.js com Telegraf.
 
 ## 📋 Características
 
-✅ Integração completa com API VideoGenAPI.com  
+✅ Integração com Replicate (múltiplos modelos de IA)  
 ✅ Interface amigável via Telegram  
 ✅ Polling automático do status de geração  
-✅ Tratamento robusto de erros (400, 401, 402, 429, 500)  
 ✅ Feedback de progresso em tempo real  
+✅ Tratamento robusto de erros  
 ✅ Código modular e bem documentado  
-✅ Configuração via arquivo .env  
+✅ **Pay-as-you-go** - Pague apenas o que usar (~$0.01-0.10/vídeo)
 
 ## 🚀 Requisitos
 
 - **Node.js** v18 ou superior
 - **npm** ou **yarn**
 - **Bot Token do Telegram** (obtenha com [@BotFather](https://t.me/botfather))
-- **API Key da VideoGenAPI** (obtenha em [videogenapi.com](https://videogenapi.com))
+- **API Token da Replicate** (obtenha em [replicate.com](https://replicate.com))
 
 ## 📦 Instalação
 
-### 1. Clone ou baixe o projeto
+### 1. Clone o projeto
 
 ```bash
 git clone https://github.com/popovidismarcoantonionista-lang/telegram-sora-bot.git
@@ -37,229 +37,238 @@ npm install
 ### 3. Configure as variáveis de ambiente
 
 ```bash
-# Copie o arquivo de exemplo
 cp .env.example .env
-
-# Edite o arquivo .env com suas credenciais
 nano .env
 ```
 
 **Arquivo `.env`:**
 
 ```env
-# Token do seu bot do Telegram (obtenha com @BotFather)
+# Token do Telegram (obtenha com @BotFather)
 TELEGRAM_BOT_TOKEN=1234567890:ABCdefGHIjklMNOpqrsTUVwxyz
 
-# API Key da VideoGenAPI (obtenha em https://videogenapi.com)
-VIDEOGENAPI_API_KEY=sua_api_key_aqui
+# Token da Replicate (obtenha em https://replicate.com/account/api-tokens)
+REPLICATE_API_TOKEN=r8_xxxxxxxxxxxxxxxxxxxx
 
-# URL base da API (geralmente não precisa alterar)
-VIDEOGENAPI_BASE_URL=https://videogenapi.com/api/v1
+# Modelo de IA (opcional)
+REPLICATE_MODEL=minimax/video-01
 
-# Configurações de vídeo (opcionais)
-DEFAULT_ASPECT_RATIO=landscape
-DEFAULT_DURATION=5
-
-# Configurações de polling (opcionais)
-POLLING_INTERVAL_MS=5000
-MAX_POLLING_ATTEMPTS=120
+# Configurações opcionais
+DEFAULT_STEPS=50
+DEFAULT_GUIDANCE_SCALE=7.5
+POLLING_INTERVAL_MS=3000
+MAX_POLLING_ATTEMPTS=200
 ```
 
 ### 4. Execute o bot
 
 ```bash
-# Modo produção
 npm start
-
-# Modo desenvolvimento (reinicia automaticamente)
-npm run dev
 ```
+
+## 🔑 Como Obter API Token da Replicate
+
+1. Acesse [replicate.com](https://replicate.com)
+2. Crie uma conta (gratuita)
+3. Vá para [Account > API Tokens](https://replicate.com/account/api-tokens)
+4. Crie um novo token
+5. Adicione **créditos** ($10 = ~100-1000 vídeos dependendo do modelo)
+6. Cole o token no arquivo `.env`
+
+## 💰 Custos
+
+| Modelo | Custo Aproximado | Qualidade | Tempo |
+|--------|------------------|-----------|-------|
+| minimax/video-01 | $0.01-0.05/vídeo | Boa | 2-5min |
+| stability-ai/stable-video-diffusion | $0.05-0.10/vídeo | Alta | 3-7min |
+| genmo/mochi-1-preview | $0.10-0.20/vídeo | Excelente | 5-10min |
+
+**💡 Dica:** Comece com $10 de crédito para testar!
 
 ## 📱 Como Usar
 
 ### Comandos disponíveis:
 
 - `/start` - Exibe mensagem de boas-vindas
-- `/help` - Mostra guia de uso e exemplos
-- `/settings` - Exibe configurações atuais
+- `/help` - Guia completo de uso e dicas
+- `/models` - Ver modelos disponíveis e custos
+- `/info` - Informações sobre o bot
 
 ### Gerando vídeos:
 
-1. Envie uma mensagem de texto com a descrição do vídeo
-2. O bot criará uma task na API VideoGenAPI
-3. Aguarde o processamento (2-10 minutos)
-4. Receba o link do vídeo gerado!
+1. Envie uma **descrição detalhada** do vídeo
+2. Aguarde o processamento (2-10 minutos)
+3. Receba o link do vídeo gerado!
 
 ### Exemplos de prompts:
 
-✅ **Bons prompts:**
-- "Uma astronauta flutuando no espaço com nebulosas coloridas ao fundo"
-- "Cachorro golden retriever correndo em um campo de flores ao pôr do sol"
-- "Cidade futurista com carros voadores, estilo cyberpunk, chuva neon"
+✅ **Excelentes:**
+- "Uma astronauta flutuando no espaço com nebulosas coloridas ao fundo, câmera girando suavemente"
+- "Cachorro golden retriever correndo em câmera lenta em um campo de flores douradas"
+- "Cidade futurista cyberpunk com arranha-céus neon, carros voadores, chuva torrencial"
 
-❌ **Prompts ruins:**
-- "Vídeo legal"
-- "Algo interessante"
+❌ **Ruins:**
+- "Vídeo legal" (muito vago)
+- "Algo interessante" (sem contexto)
+
+## 🎯 Modelos Disponíveis
+
+### 1. minimax/video-01 (Recomendado)
+- ✅ Ótimo custo-benefício
+- ✅ Rápido (2-5 min)
+- ✅ Boa qualidade
+- 💰 ~$0.01-0.05/vídeo
+
+### 2. stability-ai/stable-video-diffusion
+- ✅ Alta qualidade
+- ✅ Estável e consistente
+- ⏱️ Moderado (3-7 min)
+- 💰 ~$0.05-0.10/vídeo
+
+### 3. genmo/mochi-1-preview
+- ✅ Qualidade cinematográfica
+- ⏱️ Mais lento (5-10 min)
+- 💰 ~$0.10-0.20/vídeo
+
+Para trocar de modelo, edite `REPLICATE_MODEL` no `.env`.
 
 ## 🏗️ Estrutura do Projeto
 
 ```
 telegram-sora-bot/
-├── index.js              # Arquivo principal - inicializa o bot
-├── config.js             # Configurações e validação de env vars
-├── kieAiService.js       # Serviço de integração com API VideoGenAPI
-├── telegramBot.js        # Lógica do bot do Telegram
-├── package.json          # Dependências e scripts
+├── index.js              # Arquivo principal
+├── config.js             # Configurações
+├── replicateService.js   # Integração com Replicate
+├── telegramBot.js        # Lógica do bot
+├── package.json          # Dependências
 ├── .env.example          # Exemplo de configuração
-├── .env                  # Suas configurações (não commitar!)
-├── README.md             # Este arquivo
-├── DEPLOY.md             # Guia de deploy
-├── railway.json          # Config Railway/Render
-└── nixpacks.toml         # Build config
+└── README.md             # Este arquivo
 ```
 
-## 🔧 Módulos e Funções
+## 🚢 Deploy em Produção
 
-### **config.js**
-- `validateConfig()` - Valida variáveis de ambiente obrigatórias
+### **Render (Recomendado)**
 
-### **kieAiService.js**
-- `createVideoTask(prompt, options)` - Cria nova task de geração
-- `getTaskStatus(requestId)` - Consulta status de uma task
-- `waitForTaskCompletion(requestId, onProgress)` - Polling até conclusão
-- `handleApiError(error)` - Trata erros da API
+1. Crie conta no [Render](https://render.com)
+2. Crie um **Background Worker** (não Web Service)
+3. Conecte seu repositório GitHub
+4. Configure as variáveis de ambiente:
+   ```
+   TELEGRAM_BOT_TOKEN=...
+   REPLICATE_API_TOKEN=...
+   ```
+5. Deploy automático! ✅
 
-### **telegramBot.js**
-- `createBot()` - Cria e configura instância do bot
-- Handlers para `/start`, `/help`, `/settings`
-- Handler para mensagens de texto (prompts)
+### **Railway**
 
-## 🐛 Tratamento de Erros
+1. Crie conta no [Railway](https://railway.app)
+2. New Project → Deploy from GitHub
+3. Configure env vars
+4. Deploy automático! ✅
 
-O bot trata os seguintes erros da API:
+### **VPS (DigitalOcean, AWS, etc.)**
 
-| Código | Descrição |
-|--------|-----------|
-| 400 | Parâmetros inválidos |
-| 401 | API Key inválida ou não autorizada |
-| 402 | Créditos insuficientes |
-| 429 | Limite de requisições excedido |
-| 500 | Erro no servidor da VideoGenAPI |
-
-## ⚙️ Configurações Avançadas
-
-### Alterar formato do vídeo:
-
-```env
-DEFAULT_ASPECT_RATIO=portrait  # ou landscape
+```bash
+# Use PM2
+npm install -g pm2
+pm2 start index.js --name telegram-video-bot
+pm2 save
+pm2 startup
 ```
 
-### Alterar duração:
+## 🐛 Troubleshooting
 
-```env
-DEFAULT_DURATION=5  # 5 ou 10 segundos
-```
-
-### Ajustar polling:
-
-```env
-POLLING_INTERVAL_MS=5000       # Intervalo entre consultas (ms)
-MAX_POLLING_ATTEMPTS=120       # Máximo de tentativas antes de timeout
-```
-
-## 📝 Logs
-
-O bot exibe logs detalhados no console:
+### Bot não inicia
 
 ```
-🎬 Criando task de vídeo...
-📤 Payload enviado: {...}
-✅ Task criada com sucesso
-⏳ Iniciando polling para request abc123...
-🔄 Tentativa 1/120 - Consultando status...
-⏳ Estado atual: processing - Aguardando 5000ms...
-✅ Task concluída com sucesso!
+❌ TELEGRAM_BOT_TOKEN não configurado
 ```
+**Solução:** Configure o token no arquivo `.env`
+
+### Erro 401 Unauthorized
+
+```
+❌ API Token inválido
+```
+**Solução:** Verifique seu `REPLICATE_API_TOKEN` em [replicate.com/account/api-tokens](https://replicate.com/account/api-tokens)
+
+### Erro 402 Payment Required
+
+```
+❌ Créditos insuficientes
+```
+**Solução:** Adicione créditos em [replicate.com/account/billing](https://replicate.com/account/billing)
+
+### Vídeo demora muito
+
+- ⏱️ Normal: 2-10 minutos dependendo do modelo
+- 🔄 Verifique fila da Replicate em tempo de alta demanda
+- 💡 Use modelos mais rápidos (minimax/video-01)
 
 ## 🔒 Segurança
 
 ⚠️ **IMPORTANTE:**
-- Nunca comite o arquivo `.env` no Git
-- Mantenha suas API Keys em segredo
+- Nunca comite o arquivo `.env`
+- Mantenha suas API Tokens em segredo
 - Use variáveis de ambiente em produção
-- Implemente rate limiting se necessário
+- Monitore seus gastos na Replicate
 
-## 🚢 Deploy em Produção
+## 📊 Monitoramento de Custos
 
-### Opções de hospedagem:
-
-1. **Render (Recomendado)**
-   - Crie um **Background Worker** (não Web Service)
-   - Configure env vars no dashboard
-   - Deploy automático via GitHub
-
-2. **Railway**
-   - Use o arquivo `railway.json` incluído
-   - Configure env vars no dashboard
-   - Deploy automático
-
-3. **VPS (DigitalOcean, AWS EC2, etc.)**
-   ```bash
-   # Use PM2 para gerenciar o processo
-   npm install -g pm2
-   pm2 start index.js --name telegram-sora-bot
-   pm2 save
-   pm2 startup
-   ```
-
-4. **Docker**
-   - Crie um `Dockerfile` e `docker-compose.yml`
-   - Use volumes para persistência
-
-**📖 Guia Completo:** Veja [DEPLOY.md](DEPLOY.md) para instruções detalhadas de deploy.
+Acompanhe seus gastos em:
+- [Replicate Billing](https://replicate.com/account/billing)
+- Ver histórico de previsões e custos
+- Configurar alertas de gastos
 
 ## 🤝 Contribuindo
 
-Contribuições são bem-vindas! Por favor:
+Contribuições são bem-vindas!
 
 1. Fork o projeto
-2. Crie uma branch para sua feature
-3. Commit suas mudanças
-4. Push para a branch
+2. Crie uma branch: `git checkout -b feature/nova-feature`
+3. Commit: `git commit -m 'Add nova feature'`
+4. Push: `git push origin feature/nova-feature`
 5. Abra um Pull Request
 
 ## 📄 Licença
 
-MIT License - veja arquivo LICENSE para detalhes
-
-## 🆘 Suporte
-
-Se encontrar problemas:
-
-1. Verifique se as credenciais estão corretas no `.env`
-2. Confirme que tem créditos na conta VideoGenAPI
-3. Verifique os logs do console para detalhes do erro
-4. Consulte a [documentação da API VideoGenAPI](https://videogenapi.com/docs)
+MIT License
 
 ## 🔗 Links Úteis
 
-- [VideoGenAPI Docs](https://videogenapi.com/docs)
+- [Replicate](https://replicate.com)
+- [Replicate API Docs](https://replicate.com/docs)
 - [Telegraf.js Docs](https://telegraf.js.org/)
-- [Axios Docs](https://axios-http.com/)
-- [Node.js Best Practices](https://github.com/goldbergyoni/nodebestpractices)
+- [BotFather](https://t.me/botfather)
+- [Repositório GitHub](https://github.com/popovidismarcoantonionista-lang/telegram-sora-bot)
+
+## 💡 Dicas Pro
+
+1. **Seja específico** nos prompts - quanto mais detalhes, melhor
+2. **Teste modelos diferentes** - cada um tem estilo próprio
+3. **Monitore gastos** - configure alertas na Replicate
+4. **Use cache** - Replicate pode cachear predições similares
+5. **Batch processing** - gere vários vídeos de uma vez para economizar
+
+## 🌟 Exemplos de Uso
+
+### Vídeo de Marketing
+```
+Produto flutuando em fundo minimalista branco, luz suave, movimento rotacional lento, estilo comercial
+```
+
+### Vídeo Artístico
+```
+Ondas abstratas de tinta colorida se misturando em água cristalina, câmera submersa, iluminação natural
+```
+
+### Vídeo de Natureza
+```
+Floresta enevoada ao amanhecer, raios de sol atravessando árvores, pássaros voando, atmosfera serena
+```
 
 ---
 
-## 📊 Status da API
+**Desenvolvido com ❤️ usando Node.js, Telegraf e Replicate AI**
 
-A API VideoGenAPI.com suporta:
-
-- ✅ **Modelos:** Sora 2 Text-to-Video
-- ✅ **Formatos:** landscape (16:9), portrait (9:16)
-- ✅ **Duração:** 5s ou 10s
-- ✅ **Qualidade:** HD 1080p
-- ✅ **Polling:** Status em tempo real
-
----
-
-Desenvolvido com ❤️ usando Node.js, Telegraf e VideoGenAPI.com
+⭐ Se gostou do projeto, dê uma estrela no GitHub!
