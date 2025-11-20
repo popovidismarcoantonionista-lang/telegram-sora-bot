@@ -1,6 +1,5 @@
 /**
  * Módulo de Configuração
- * Carrega e valida variáveis de ambiente
  */
 import dotenv from 'dotenv';
 
@@ -15,23 +14,34 @@ const config = {
   // Hugging Face
   huggingface: {
     apiToken: process.env.HUGGINGFACE_API_TOKEN,
-    // Modelo padrão: Stable Diffusion XL (melhor qualidade)
-    // Alternativas: stabilityai/stable-diffusion-2-1, runwayml/stable-diffusion-v1-5
-    model: process.env.HF_MODEL || 'stabilityai/stable-diffusion-xl-base-1.0',
+
+    // Modelo de IMAGEM
+    imageModel: process.env.HF_IMAGE_MODEL || 'stabilityai/stable-diffusion-xl-base-1.0',
+
+    // Modelo de VÍDEO (grátis do Hugging Face)
+    // Opções: 'ali-vilab/text-to-video-ms-1.7b', 'damo-vilab/text-to-video-ms-1.7b'
+    videoModel: process.env.HF_VIDEO_MODEL || 'damo-vilab/text-to-video-ms-1.7b',
+
     negativePrompt: process.env.NEGATIVE_PROMPT || 'blurry, bad quality, distorted, ugly, watermark',
   },
 
-  // Configurações de imagem
+  // Configurações de IMAGEM
   image: {
     defaultWidth: parseInt(process.env.IMAGE_WIDTH) || 1024,
     defaultHeight: parseInt(process.env.IMAGE_HEIGHT) || 1024,
-    defaultSteps: parseInt(process.env.INFERENCE_STEPS) || 30,
-    defaultGuidanceScale: parseFloat(process.env.GUIDANCE_SCALE) || 7.5,
+    defaultSteps: parseInt(process.env.IMAGE_STEPS) || 30,
+    defaultGuidanceScale: parseFloat(process.env.IMAGE_GUIDANCE) || 7.5,
+  },
+
+  // Configurações de VÍDEO
+  video: {
+    defaultSteps: parseInt(process.env.VIDEO_STEPS) || 25,
+    defaultFrames: parseInt(process.env.VIDEO_FRAMES) || 16,
   },
 };
 
 /**
- * Valida se todas as configurações obrigatórias estão presentes
+ * Valida configurações
  */
 export function validateConfig() {
   const errors = [];
@@ -47,12 +57,12 @@ export function validateConfig() {
   if (errors.length > 0) {
     console.error('\n🚨 Erros de configuração:\n');
     errors.forEach(error => console.error(error));
-    console.error('\n📝 Configure as variáveis de ambiente necessárias.\n');
-    console.error('💡 Obtenha seu token em: https://huggingface.co/settings/tokens\n');
+    console.error('\n📝 Configure as variáveis necessárias.\n');
+    console.error('💡 Token: https://huggingface.co/settings/tokens\n');
     process.exit(1);
   }
 
-  console.log('✅ Configurações validadas com sucesso');
+  console.log('✅ Configurações validadas');
 }
 
 export default config;
