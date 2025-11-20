@@ -8,9 +8,11 @@ import fs from 'fs';
 import path from 'path';
 
 /**
- * Cliente Hugging Face configurado
+ * Cliente Hugging Face configurado com nova URL
  */
-const hf = new HfInference(config.huggingface.apiToken);
+const hf = new HfInference(config.huggingface.apiToken, {
+  apiUrl: 'https://api-inference.huggingface.co', // URL correta
+});
 
 /**
  * Gera uma imagem usando Stable Diffusion
