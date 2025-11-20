@@ -1,11 +1,8 @@
 /**
- * Bot Telegram - AI Image Generator
+ * Bot Telegram - AI Image & Video Generator
  * 
- * Gera imagens incríveis usando Hugging Face + Stable Diffusion
+ * Gera imagens e vídeos usando Hugging Face + Stable Diffusion
  * 100% Gratuito e Open Source
- * 
- * Autor: Rube AI
- * Data: 2025
  */
 
 import config, { validateConfig } from './config.js';
@@ -25,9 +22,15 @@ async function main() {
   validateConfig();
   console.log('');
 
-  // 2. Info do modelo
-  const modelName = config.huggingface.model.split('/').pop();
-  console.log(`🎯 Modelo: ${modelName}`);
+  // 2. Info dos modelos
+  const imageModel = config.huggingface?.imageModel || 'stable-diffusion-xl';
+  const videoModel = config.huggingface?.videoModel || 'text-to-video-ms';
+
+  const imageModelName = imageModel.includes('/') ? imageModel.split('/').pop() : imageModel;
+  const videoModelName = videoModel.includes('/') ? videoModel.split('/').pop() : videoModel;
+
+  console.log(`🎨 Modelo Imagem: ${imageModelName}`);
+  console.log(`🎬 Modelo Vídeo: ${videoModelName}`);
   console.log(`📐 Resolução: ${config.image.defaultWidth}x${config.image.defaultHeight}`);
   console.log('');
 
@@ -45,7 +48,7 @@ async function main() {
   await bot.launch();
 
   console.log('🎉 Bot rodando! Ctrl+C para parar.\n');
-  console.log('💡 Dica: Envie descrições detalhadas para melhores resultados!\n');
+  console.log('💡 Envie descrições para criar imagens ou use /video para vídeos!\n');
 }
 
 /**
