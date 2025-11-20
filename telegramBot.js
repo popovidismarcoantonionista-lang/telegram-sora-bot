@@ -29,7 +29,7 @@ export function createBot() {
     const welcomeMessage = `
 🎬 *Bem-vindo ao Bot Sora 2 Video Generator!*
 
-Este bot gera vídeos usando a API Kie.ai Sora 2 Text To Video.
+Este bot gera vídeos usando a API VideoGenAPI.com.
 
 📝 *Como usar:*
 Envie uma descrição em texto do vídeo que deseja criar.
@@ -46,8 +46,7 @@ Um gato laranja caminhando em uma praia ao pôr do sol
 
 🎨 *Configurações padrão:*
 • Formato: ${config.video.defaultAspectRatio}
-• Frames: ${config.video.defaultNFrames}
-• Marca d'água: ${config.video.removeWatermark ? 'Removida' : 'Visível'}
+• Duração: ${config.video.defaultDuration} segundos
 
 Envie seu primeiro prompt para começar! 🚀
     `;
@@ -77,7 +76,7 @@ Seja específico e criativo! Descreva:
 ❌ "Algo interessante"
 
 *2. Aguarde o processamento*
-A geração pode levar de 1 a 5 minutos dependendo da complexidade.
+A geração pode levar de 2 a 10 minutos dependendo da complexidade.
 
 *3. Receba seu vídeo*
 O bot enviará o link do vídeo assim que estiver pronto!
@@ -99,10 +98,8 @@ O bot enviará o link do vídeo assim que estiver pronto!
 📐 *Formato:* ${config.video.defaultAspectRatio}
    (landscape = 16:9, portrait = 9:16)
 
-🎞️ *Frames:* ${config.video.defaultNFrames}
-   (10 = ~4s, 15 = ~6s)
-
-💧 *Marca d'água:* ${config.video.removeWatermark ? '✅ Removida' : '❌ Visível'}
+⏱️ *Duração:* ${config.video.defaultDuration} segundos
+   (5s ou 10s)
 
 ℹ️ Estas configurações são definidas no servidor.
 Para alterá-las, entre em contato com o administrador.
@@ -143,19 +140,19 @@ Para alterá-las, entre em contato com o administrador.
         return;
       }
 
-      const taskId = createResult.taskId;
-      await ctx.reply(`✅ Task criada com sucesso!\n🆔 Task ID: \`${taskId}\`\n\n⏳ Processando... Isso pode levar alguns minutos.`, {
+      const requestId = createResult.requestId;
+      await ctx.reply(`✅ Task criada com sucesso!\n🆔 Request ID: \`${requestId}\`\n\n⏳ Processando... Isso pode levar alguns minutos.`, {
         parse_mode: 'Markdown'
       });
 
       // 2. Aguardar conclusão com feedback de progresso
       let lastProgressMessage = null;
 
-      const result = await waitForTaskCompletion(taskId, async (attempt, maxAttempts, state) => {
-        // Envia atualizações a cada 5 tentativas
-        if (attempt % 5 === 0) {
+      const result = await waitForTaskCompletion(requestId, async (attempt, maxAttempts, status) => {
+        // Envia atualizações a cada 10 tentativas
+        if (attempt % 10 === 0) {
           const progress = Math.round((attempt / maxAttempts) * 100);
-          const progressMessage = `⏳ Progresso: ${progress}%\nEstado: ${state}\nTentativa ${attempt}/${maxAttempts}`;
+          const progressMessage = `⏳ Progresso: ${progress}%\nEstado: ${status}\nTentativa ${attempt}/${maxAttempts}`;
 
           if (lastProgressMessage) {
             try {
@@ -176,24 +173,22 @@ Para alterá-las, entre em contato com o administrador.
 
       // 3. Processar resultado
       if (!result.success) {
-        await ctx.reply(`${result.error}\n\n🆔 Task ID: \`${taskId}\``, {
+        await ctx.reply(`${result.error}\n\n🆔 Request ID: \`${requestId}\``, {
           parse_mode: 'Markdown'
         });
         return;
       }
 
       // 4. Enviar vídeo ao usuário
-      if (result.videoUrls && result.videoUrls.length > 0) {
-        const videoUrl = result.videoUrls[0];
-
+      if (result.videoUrl) {
         const successMessage = `
 ✨ *Vídeo gerado com sucesso!*
 
 🎥 *Link do vídeo:*
-${videoUrl}
+${result.videoUrl}
 
-🆔 *Task ID:* \`${taskId}\`
-📊 *Estado:* ${result.state}
+🆔 *Request ID:* \`${requestId}\`
+📊 *Estado:* ${result.status}
 
 💡 *Próximos passos:*
 • Clique no link para baixar/visualizar
@@ -204,7 +199,7 @@ ${videoUrl}
         await ctx.replyWithMarkdown(successMessage);
 
       } else {
-        await ctx.reply(`⚠️ Vídeo processado, mas nenhum link foi retornado.\n\n🆔 Task ID: \`${taskId}\`\n📊 Estado: ${result.state}`, {
+        await ctx.reply(`⚠️ Vídeo processado, mas nenhum link foi retornado.\n\n🆔 Request ID: \`${requestId}\`\n📊 Estado: ${result.status}`, {
           parse_mode: 'Markdown'
         });
       }
