@@ -12,23 +12,22 @@ const config = {
     botToken: process.env.TELEGRAM_BOT_TOKEN,
   },
 
-  // Kie.ai API
-  kieAi: {
-    apiKey: process.env.KIE_AI_API_KEY,
-    baseUrl: process.env.KIE_AI_BASE_URL || 'https://api.kie.ai/api/v1',
+  // VideoGenAPI
+  videoGenApi: {
+    apiKey: process.env.VIDEOGENAPI_API_KEY,
+    baseUrl: process.env.VIDEOGENAPI_BASE_URL || 'https://videogenapi.com/api/v1',
   },
 
   // Configurações de vídeo
   video: {
     defaultAspectRatio: process.env.DEFAULT_ASPECT_RATIO || 'landscape',
-    defaultNFrames: parseInt(process.env.DEFAULT_N_FRAMES) || 15,
-    removeWatermark: process.env.REMOVE_WATERMARK === 'true',
+    defaultDuration: parseInt(process.env.DEFAULT_DURATION) || 5,
   },
 
   // Configurações de polling
   polling: {
-    intervalMs: parseInt(process.env.POLLING_INTERVAL_MS) || 3000,
-    maxAttempts: parseInt(process.env.MAX_POLLING_ATTEMPTS) || 100,
+    intervalMs: parseInt(process.env.POLLING_INTERVAL_MS) || 5000,
+    maxAttempts: parseInt(process.env.MAX_POLLING_ATTEMPTS) || 120,
   },
 };
 
@@ -42,8 +41,8 @@ export function validateConfig() {
     errors.push('❌ TELEGRAM_BOT_TOKEN não configurado');
   }
 
-  if (!config.kieAi.apiKey) {
-    errors.push('❌ KIE_AI_API_KEY não configurado');
+  if (!config.videoGenApi.apiKey) {
+    errors.push('❌ VIDEOGENAPI_API_KEY não configurado');
   }
 
   if (errors.length > 0) {
